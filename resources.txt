@@ -1,0 +1,7 @@
+detailed description of RDD 
+
+https://conjointly.com/kb/regression-discontinuity-design/
+
+example of how to do RDD using r
+
+https://rpubs.com/phle/r_tutorial_regression_discontinuity_design
