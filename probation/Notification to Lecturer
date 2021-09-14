@@ -1,0 +1,16 @@
+Selected paper:  
+Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation." American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95 
+ 
+
+Data set: 
+As attached (are we expected to provide the raw data?) 
+
+ 
+What is being replicated: 
+Regression discontinuity based on all students, sex, primary language and highschool grades.
+Assess if being put on probreation in first year affects likelihood of being on probation in later years of study
+
+
+ 
+Free roam: 
+Split the data into above and below the cutoff and perform prediction on each to see if we can predict the student will or will not continue study
