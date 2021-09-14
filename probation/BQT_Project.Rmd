@@ -1,0 +1,22 @@
+---
+title: "BQT_Project"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Reading Data. Data is in .dta format. It would require "foreign" library. Sorry to xenophobes. 
+
+```{r}
+library(foreign)
+data <- read.dta("data.dta")
+```
+
+Now, we will drop data points that are not in the range
+
+```{r}
+data <- data[data$dist_from_cut > -1.4 & data$dist_from_cut < 1.4]
+```
+

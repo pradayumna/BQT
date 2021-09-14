@@ -12,5 +12,17 @@ Assess if being put on probreation in first year affects likelihood of being on 
 
 
  
-Free roam: 
+Free roam Idea 1: 
 Split the data into above and below the cutoff and perform prediction on each to see if we can predict the student will or will not continue study
+
+
+Free roam Idea 2
+We can do RDD only and estimate discontinuity for subgroups not included in the research paper. 
+Right now, they are doing analysis for 6 subgroups. these are, men, women, native english speakers, non-native english speakers, Low HS grade and High HS Grade.
+
+Ideas for making subgroups:
+
+1. subgroups based on age. right now the age span is between 17-21. we can divide it into two groups of pre-teen (17-19) and post-teen (19-21).
+
+
+2. Place of Birth (born in north America and otherwise)
