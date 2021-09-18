@@ -1,0 +1,19 @@
+Date - 18th Sept 2021
+
+So these are the observations that I have made regarding data preprocessing 
+
+1. We do not have data for the batch that took admission in 1995. The paper mentions analysis on 9 cohorts but we actually have 8 cohorts only. 
+
+2. We do not need to omit any students due to missing data as no data is missing(I think authors uploaded pre-processed data only)
+
+3. We do not need to restrict data based on age (authors took care of that part too). 
+
+4. However, distance from cutoff has a range of -1.6 to 2.8. Therefore, we need to filter on this. We need to confirm with unit coordinator if we can choose a different range than the one mentioned in the paper. If she says yes, we will have options of 1.4, 1.2, 1.0. We can also try 0.8 and 0.6. Number of samples in case we choose one of these cutoffs would be ->
+
+1.4 -> 29601
+1.2 -> 25389
+1.0 -> 21471
+0.8 -> 16910
+0.6 -> 12530
+
+for now, I will proceed with analyses using cutoff as 1.4

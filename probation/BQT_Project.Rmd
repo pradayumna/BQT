@@ -17,6 +17,32 @@ data <- read.dta("data.dta")
 Now, we will drop data points that are not in the range
 
 ```{r}
-data <- data[data$dist_from_cut > -1.4 & data$dist_from_cut < 1.4]
+data1 <- data[data$dist_from_cut > -1.4 & data$dist_from_cut < 1.4, ]
+```
+
+```{r}
+library(qwraps2)
+
+descriptive_summary <- list("Characterisitcs" = list('High School Grade Percentile' =~ qwraps2::mean_sd(hsgrade_pct),
+                                                     'Credits Attempted in First Year' =~ qwraps2::mean_sd(totcredits_year1),
+                                                     'Age at entry' =~ qwraps2::mean_sd(age_at_entry),
+                                                     'male' =~ qwraps2::mean_sd(male),
+                                                     'English is First Language' =~ qwraps2::mean_sd(english),
+                                                     'Born in North America' =~ qwraps2::mean_sd(bpl_north_america),
+                                                     'At Campus 1' =~ qwraps2::mean_sd(loc_campus1),
+                                                     'At Campus 2' =~ qwraps2::mean_sd(loc_campus2),
+                                                     'At Campus 3' =~ qwraps2::mean_sd(loc_campus3)), 
+                            "Outcomes" = list('Distance from Cutoff in 1st Year' =~ qwraps2::mean_sd(dist_from_cut),
+                                              'On Probation After 1st Year' =~ qwraps2::mean_sd(probation_year1),
+                                              'Ever on Academic Probation' =~ qwraps2::mean_sd(probation_ever),
+                                              'Left University after 1st Evaluation' =~ qwraps2::mean_sd(left_school),
+                                              'Distance from Cutoff Next Evaluation' =~ qwraps2::mean_sd(nextGPA, na_rm = TRUE, show_n = 'never'),
+                                              'Ever Suspended' =~ qwraps2::mean_sd(suspended_ever, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 4' =~ qwraps2::mean_sd(gradin4, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 5' =~ qwraps2::mean_sd(gradin5, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 6' =~ qwraps2::mean_sd(gradin6, na_rm = TRUE, show_n = 'never')))
+options(qwraps2_markup = "markdown")
+table1 = summary_table(data1, descriptive_summary)
+
 ```
 
