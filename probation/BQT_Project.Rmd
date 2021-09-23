@@ -11,13 +11,13 @@ Reading Data. Data is in .dta format. It would require "foreign" library. Sorry 
 
 ```{r}
 library(foreign)
-data <- read.dta("data.dta")
+data_main <- read.dta("data.dta")
 ```
 
 Now, we will drop data points that are not in the range
 
 ```{r}
-data1 <- data[data$dist_from_cut > -1.4 & data$dist_from_cut < 1.4, ]
+data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
 ```
 
 ```{r}
@@ -43,6 +43,33 @@ descriptive_summary <- list("Characterisitcs" = list('High School Grade Percenti
                                               'Graduated by Year 6' =~ qwraps2::mean_sd(gradin6, na_rm = TRUE, show_n = 'never')))
 options(qwraps2_markup = "markdown")
 table1 = summary_table(data1, descriptive_summary)
-
+table1
 ```
 
+#testing for conditions of RDD
+```{r}
+library(sandwich)
+library(lmtest)
+library(dplyr)
+library(formattable)
+
+val_check = function(x)
+{
+  model = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = data1)
+  a = coeftest(model, vcov = vcovCL, cluster = data1$clustervar)
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
+chardata <- data1[myvars]
+colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(chardata, val_check)
+table2 = do.call(rbind.data.frame, answer)
+colnames(table2) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table2) <- myvars
+formattable(table2, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
