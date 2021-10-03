@@ -1,0 +1,106 @@
+##Trial of different regression disconinuity models
+
+```{r, include=FALSE}
+library(foreign)
+data_main <- read.dta("~/ECOM5002/Project/data.dta")
+
+```
+
+Now, we will drop data points that are not in the range
+
+```{r, include=FALSE}
+data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+```
+
+
+RDD  - trial https://www.jepusto.com/rdd-interactions/
+```{r}
+library(rdd)
+bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
+rdd_simple <- RDestimate(probation_year1 ~ dist_from_cut, data = data1, cutpoint = 0, bw = bw)
+summary(rdd_simple)
+plot(rdd_simple)
+```
+
+RDD using characteristics - Not sure if everything is correct, I have values but I need to read further to figure out how to interpret
+```{r}
+bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
+RDD_data1 = function(y)
+{
+    RDDmodel = RDestimate(y ~ dist_from_cut , data = data1, cutpoint = 0, bw = bw, model = TRUE)
+}
+myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
+chardata <- data1[myvars]
+RDDanswer = lapply(chardata, RDD_data1)
+RDDanswer
+```
+
+
+https://bookdown.org/carillitony/bailey/chp11.html#fn34
+```{r}
+library(tidyverse)
+library(broom)
+```
+
+
+```{r}
+data1 %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1)) + 
+  geom_point() +
+  geom_vline(xintercept = 0) + 
+  labs(y = "On Probation First year", x = "GPA distance from cutoff")
+```
+##Same slope
+```{r}
+data1 %>% 
+  mutate(D = ifelse(dist_from_cut >= 0, 1, 0)) %$% 
+  lm(probation_year1 ~ D + I(dist_from_cut - 0)) %>% 
+  summary()
+```
+##Plot same slope
+```{r}
+data1 %>% 
+ 
+  mutate(D = as.factor(ifelse(dist_from_cut <= 0, 1, 0))) %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1)) +
+  geom_point(aes(color = D)) + 
+  geom_smooth(method = "lm")
+```
+
+##Interaction
+```{r}
+data1 %>% 
+  mutate(D = ifelse(dist_from_cut >= 0, 1, 0)) %$% 
+  lm(probation_year1 ~ D * I(dist_from_cut - 0)) %>% 
+  summary()
+```
+
+## plot different slopes
+```{r}
+
+data1 %>% 
+  
+  mutate(D = as.factor(ifelse(dist_from_cut <= 0, 1, 0))) %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1, color = D)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+
+RDDTools
+```{r}
+library(dplyr)
+library(rddtools)
+Data1_all_rdd_same <- rdd_data(x=data1$dist_from_cut, y=data1$probation_year1,cutpoint = 0) 
+Data1_all_para_rdd_same <- rdd_reg_lm(rdd_object=Data1_all_rdd_same, slope = "same") 
+summary(Data1_all_para_rdd_same)
+
+```
+
+```{r}
+library(dplyr)
+library(rddtools)
+Data1_all_rdd_sep <- rdd_data(x=data1$dist_from_cut, y=data1$probation_year1, cutpoint = 0) 
+Data1_all_para_rdd_sep <- rdd_reg_lm(rdd_object=Data1_all_rdd_sep, slope = "separate") 
+summary(Data1_all_para_rdd_sep)
+
+```
