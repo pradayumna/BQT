@@ -42,7 +42,7 @@ library(tidyverse)
 library(broom)
 ```
 
-
+PLAYING WITH PLOTS - still in progress
 ```{r}
 data1 %>% 
   ggplot(aes(x = dist_from_cut, y = probation_year1)) + 
@@ -103,4 +103,68 @@ Data1_all_rdd_sep <- rdd_data(x=data1$dist_from_cut, y=data1$probation_year1, cu
 Data1_all_para_rdd_sep <- rdd_reg_lm(rdd_object=Data1_all_rdd_sep, slope = "separate") 
 summary(Data1_all_para_rdd_sep)
 
+```
+
+
+
+
+
+```{r}
+cut_data <- clean_for_summary %>% 
+  filter(dist_from_cut >= -0.2, dist_from_cut <= 0.2)
+#Filter invalid data caused by university administrative error in data reporting
+clean_cut <- cut_data %>% 
+  filter((dist_from_cut < 0 & probation_year1 ==1)| (dist_from_cut >=0 & probation_year1 ==0) )
+```
+
+
+```{r}
+ggplot(clean_cut,aes(x = dist_from_cut, y = status, group = status, color = status))+
+  geom_point(alpha = 0.05)+
+  geom_smooth(method = "lm")+
+  theme_minimal()+
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))+
+  labs( title = "Stuent Academic Status",
+        y ="Academic Status",
+        x = "Year 1 GPA minus Probation Cutoff")
+```
+
+```{r}
+clean_cut <- clean_cut %>% 
+  mutate( status = case_when(probation_year1 == 0 ~ "In Good Standing",
+                             probation_year1 == 1 ~ "On Academic Probation"))
+class(clean_cut$status)
+clean_cut$status <- as.factor(clean_cut$status)
+levels(clean_cut$status)
+# Set students on academic probation as the baseline group
+clean_cut$status <- relevel(clean_cut$status, "On Academic Probation")
+
+
+# Logistic Regression to estimate the impact of probation on student dropout
+# Bandwidth 0.2
+dropout_02 <- glm(left_school ~ status + dist_from_cut + gender + highHS + first_language ,family = "binomial", data = clean_cut)
+
+modelsummary(dropout_02,
+             statistic = "{std.error} ({p.value})",
+             stars =TRUE,
+             coef_map = c("(Intercept)" = "Constant", "statusIn Good Standing" = "In Good Standing", "dist_from_cut" = "f(Cutoff Distance)","genderMale" = "Gender Male", "highHS" = "Highschool Above Average", "first_languageOther" = "First Language Not English "),
+             exponentiate = TRUE,
+             title = "Logistic Regression for the Impact of Academic Probation on Student Dropout",
+             gof_omit = "BIC") %>% 
+  add_footnote("Odds Ratio in First Row. Standard Error of Log of Odds in Second Row. P-value in Parentheses", notation = "number") %>% 
+  kable_styling(latex_options = "hold_position")
+```
+
+
+```{r}
+ggplot(data= clean_cut, aes(x = dist_from_cut, y = left_school, color = status))+
+  geom_point(alpha = 0.05)+
+  geom_smooth(method = "glm", method.args = list(family = 'binomial'))+
+  theme_light()+
+  geom_vline(xintercept = 0, linetype = "dotted")+
+  theme(legend.title = element_blank(), legend.position = "bottom", plot.title = element_text(hjust = 0.5))+
+  guides(color=guide_legend(override.aes=list(fill=NA)))+
+  labs(title = "Academic Probation Impact on Dropout",
+       x = "Year 1 GPA minus Probation Cutoff",
+       y = "Left University")
 ```
