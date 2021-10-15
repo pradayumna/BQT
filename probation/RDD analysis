@@ -7,17 +7,17 @@ data_main <- read.dta("~/ECOM5002/Project/data.dta")
 Now, we will drop data points that are not in the range
 
 ```{r, include=FALSE}
-data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
 ```
 
-##Frequency distribution to show continuity through teh cutoff
+##Frequency distribution to show continuity through the cutoff
 ```{r}
 
-clean_cut <- clean_cut %>% 
+data1 <- data1 %>% 
   mutate(freq = 1)
 
 # replace variable freq by quantity in each group of dist_from_cut_round10
-clean_cut1 <- clean_cut%>% 
+data1 <- data1%>% 
   group_by(dist_from_cut_med10) %>% 
   mutate(freq = length(freq))
 ```
@@ -26,10 +26,10 @@ RDDTools
 ```{r}
 library(dplyr)
 library(rddtools)
-Data1_all_rdd_same <- rdd_data(x=clean_cut1$dist_from_cut, y=clean_cut1$freq,cutpoint = 0) 
+Data1_all_rdd_same <- rdd_data(x=data1$dist_from_cut, y=data1$freq,cutpoint = 0) 
 Data1_all_para_rdd_same <- rdd_reg_lm(rdd_object=Data1_all_rdd_same, slope = "same") 
 summary(Data1_all_para_rdd_same)
-rdplot(x=clean_cut1$dist_from_cut, y=clean_cut1$freq,  kernel = 'triangular', binselect = 'qspr')
+rdplot(x=data1$dist_from_cut, y=data1$freq,  kernel = 'triangular')
 ```
 
 ________________________________________________________________________________________________________
