@@ -17,7 +17,7 @@ data1 <- data1 %>%
   mutate(freq = 1)
 
 # replace variable freq by quantity in each group of dist_from_cut_round10
-data1 <- data1%>% 
+data1A <- data1%>% 
   group_by(dist_from_cut_med10) %>% 
   mutate(freq = length(freq))
 ```
@@ -26,11 +26,22 @@ RDDTools
 ```{r}
 library(dplyr)
 library(rddtools)
-Data1_all_rdd_same <- rdd_data(x=data1$dist_from_cut, y=data1$freq,cutpoint = 0) 
+Data1_all_rdd_same <- rdd_data(x=data1A$dist_from_cut, y=data1A$freq,cutpoint = 0) 
 Data1_all_para_rdd_same <- rdd_reg_lm(rdd_object=Data1_all_rdd_same, slope = "same") 
 summary(Data1_all_para_rdd_same)
-rdplot(x=data1$dist_from_cut, y=data1$freq,  kernel = 'triangular')
+rdplot(x=data1A$dist_from_cut, y=data1A$freq,  kernel = 'triangular')
 ```
+
+This plot looks better
+```{r}
+data1A %>% 
+  ggplot(aes(x = dist_from_cut_med10, y = freq)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "Frequency count", x = "GPA distance from cutoff")
+```
+
 
 ________________________________________________________________________________________________________
 ##Trial of different regression disconinuity models
