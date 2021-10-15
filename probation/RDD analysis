@@ -32,7 +32,8 @@ summary(Data1_all_para_rdd_same)
 rdplot(x=data1A$dist_from_cut, y=data1A$freq,  kernel = 'triangular')
 ```
 
-This plot looks better
+This plot looks better:
+Continuous
 ```{r}
 data1A %>% 
   ggplot(aes(x = dist_from_cut_med10, y = freq)) + 
@@ -41,7 +42,15 @@ data1A %>%
   geom_vline(xintercept = 0) + 
   labs(y = "Frequency count", x = "GPA distance from cutoff")
 ```
-
+Separate
+```{r}
+data1A %>% 
+  ggplot(aes(x = dist_from_cut_med10, y = freq, color=data1A$dist_from_cut>0)) + 
+  geom_point(aes(color=data1A$dist_from_cut>0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "Frequency count", x = "GPA distance from cutoff")
+```
 
 ________________________________________________________________________________________________________
 ##Trial of different regression disconinuity models
