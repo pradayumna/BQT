@@ -52,162 +52,39 @@ data1A %>%
   labs(y = "Frequency count", x = "GPA distance from cutoff")
 ```
 
-________________________________________________________________________________________________________
-##Trial of different regression disconinuity models
-https://bookdown.org/carillitony/bailey/chp11.html#fn34
-```{r}
-library(tidyverse)
-library(broom)
-```
 
-PLAYING WITH PLOTS - still in progress
+This show that there is some error in the data as there are values assigned as no probation when below the cutoff and values assigned as on probation when above the cutoff
 ```{r}
 data1 %>% 
-  ggplot(aes(x = dist_from_cut, y = probation_year1)) + 
-  geom_point() +
+  ggplot(aes(x = dist_from_cut, y = probation_year1, color=data1$dist_from_cut>0)) + 
+  geom_point(aes(color=data1$dist_from_cut>0)) +
+  geom_smooth(method = "lm", se = FALSE)+
   geom_vline(xintercept = 0) + 
-  labs(y = "On Probation First year", x = "GPA distance from cutoff")
-```
-##Same slope
-```{r}
-data1 %>% 
-  mutate(D = ifelse(dist_from_cut >= 0, 1, 0)) %$% 
-  lm(probation_year1 ~ D + I(dist_from_cut - 0)) %>% 
-  summary()
-```
-##Plot same slope
-```{r}
-data1 %>% 
- 
-  mutate(D = as.factor(ifelse(dist_from_cut <= 0, 1, 0))) %>% 
-  ggplot(aes(x = dist_from_cut, y = probation_year1)) +
-  geom_point(aes(color = D)) + 
-  geom_smooth(method = "lm")
+  labs(y = "On Probation (First Yr)", x = "GPA distance from cutoff")
 ```
 
-##Interaction
-```{r}
-data1 %>% 
-  mutate(D = ifelse(dist_from_cut >= 0, 1, 0)) %$% 
-  lm(probation_year1 ~ D * I(dist_from_cut - 0)) %>% 
-  summary()
-```
-
-## plot different slopes
-```{r}
-
-data1 %>% 
-  
-  mutate(D = as.factor(ifelse(dist_from_cut <= 0, 1, 0))) %>% 
-  ggplot(aes(x = dist_from_cut, y = probation_year1, color = D)) +
-  geom_point() + 
-  geom_smooth(method = "lm")
-```
-
-RDDTools
-```{r}
-library(dplyr)
-library(rddtools)
-Data1_all_rdd_same <- rdd_data(x=data1$dist_from_cut, y=data1$probation_year1,cutpoint = 0) 
-Data1_all_para_rdd_same <- rdd_reg_lm(rdd_object=Data1_all_rdd_same, slope = "same") 
-summary(Data1_all_para_rdd_same)
-
-```
-
-```{r}
-library(dplyr)
-library(rddtools)
-Data1_all_rdd_sep <- rdd_data(x=data1$dist_from_cut, y=data1$probation_year1, cutpoint = 0) 
-Data1_all_para_rdd_sep <- rdd_reg_lm(rdd_object=Data1_all_rdd_sep, slope = "separate") 
-summary(Data1_all_para_rdd_sep)
-
-```
-
-
-
-
-
-```{r}
-cut_data <- clean_for_summary %>% 
-  filter(dist_from_cut >= -0.2, dist_from_cut <= 0.2)
-#Filter invalid data caused by university administrative error in data reporting
-clean_cut <- cut_data %>% 
+Remove these points (study states it is an administrative error)
+```{r eval=FALSE, include=FALSE}
+clean_cut <- data1 %>% 
   filter((dist_from_cut < 0 & probation_year1 ==1)| (dist_from_cut >=0 & probation_year1 ==0) )
 ```
 
-
+Rerun
 ```{r}
-ggplot(clean_cut,aes(x = dist_from_cut, y = status, group = status, color = status))+
-  geom_point(alpha = 0.05)+
-  geom_smooth(method = "lm")+
-  theme_minimal()+
-  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))+
-  labs( title = "Stuent Academic Status",
-        y ="Academic Status",
-        x = "Year 1 GPA minus Probation Cutoff")
+Data1_all_rdd_prob_cl <- rdd_data(x=clean_cut$dist_from_cut, y=clean_cut$probation_year1,cutpoint = 0) 
+Data1_all_para_rdd_prob_cl <- rdd_reg_lm(rdd_object=Data1_all_rdd_prob_cl, slope = "separate") 
+summary(Data1_all_para_rdd_prob_cl)
+rdplot(x=clean_cut$dist_from_cut, y=clean_cut$probation_year1,  kernel = 'triangular')
+```
+or
+```{r}
+clean_cut %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1, color=clean_cut$dist_from_cut>=0)) + 
+  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "On Probation (First Yr)", x = "GPA distance from cutoff")
 ```
 
-```{r}
-clean_cut <- clean_cut %>% 
-  mutate( status = case_when(probation_year1 == 0 ~ "In Good Standing",
-                             probation_year1 == 1 ~ "On Academic Probation"))
-class(clean_cut$status)
-clean_cut$status <- as.factor(clean_cut$status)
-levels(clean_cut$status)
-# Set students on academic probation as the baseline group
-clean_cut$status <- relevel(clean_cut$status, "On Academic Probation")
-
-
-# Logistic Regression to estimate the impact of probation on student dropout
-# Bandwidth 0.2
-dropout_02 <- glm(left_school ~ status + dist_from_cut + gender + highHS + first_language ,family = "binomial", data = clean_cut)
-
-modelsummary(dropout_02,
-             statistic = "{std.error} ({p.value})",
-             stars =TRUE,
-             coef_map = c("(Intercept)" = "Constant", "statusIn Good Standing" = "In Good Standing", "dist_from_cut" = "f(Cutoff Distance)","genderMale" = "Gender Male", "highHS" = "Highschool Above Average", "first_languageOther" = "First Language Not English "),
-             exponentiate = TRUE,
-             title = "Logistic Regression for the Impact of Academic Probation on Student Dropout",
-             gof_omit = "BIC") %>% 
-  add_footnote("Odds Ratio in First Row. Standard Error of Log of Odds in Second Row. P-value in Parentheses", notation = "number") %>% 
-  kable_styling(latex_options = "hold_position")
-```
-
-
-```{r}
-ggplot(data= clean_cut, aes(x = dist_from_cut, y = left_school, color = status))+
-  geom_point(alpha = 0.05)+
-  geom_smooth(method = "glm", method.args = list(family = 'binomial'))+
-  theme_light()+
-  geom_vline(xintercept = 0, linetype = "dotted")+
-  theme(legend.title = element_blank(), legend.position = "bottom", plot.title = element_text(hjust = 0.5))+
-  guides(color=guide_legend(override.aes=list(fill=NA)))+
-  labs(title = "Academic Probation Impact on Dropout",
-       x = "Year 1 GPA minus Probation Cutoff",
-       y = "Left University")
-```
-
-
-RDD  - trial https://www.jepusto.com/rdd-interactions/
-```{r}
-library(rdd)
-bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
-rdd_simple <- RDestimate(probation_year1 ~ dist_from_cut, data = data1, cutpoint = 0, bw = bw)
-summary(rdd_simple)
-plot(rdd_simple)
-```
-
-RDD using characteristics - Not sure if everything is correct, I have values but I need to read further to figure out how to interpret
-```{r}
-bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
-RDD_data1 = function(y)
-{
-    RDDmodel = RDestimate(y ~ dist_from_cut , data = data1, cutpoint = 0, bw = bw, model = TRUE)
-}
-myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
-chardata <- data1[myvars]
-RDDanswer = lapply(chardata, RDD_data1)
-RDDanswer
-```
 
 
