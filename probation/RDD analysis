@@ -1,5 +1,3 @@
-##Trial of different regression disconinuity models
-
 ```{r, include=FALSE}
 library(foreign)
 data_main <- read.dta("~/ECOM5002/Project/data.dta")
@@ -12,30 +10,30 @@ Now, we will drop data points that are not in the range
 data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
 ```
 
-
-RDD  - trial https://www.jepusto.com/rdd-interactions/
+##Frequency distribution to show continuity through teh cutoff
 ```{r}
-library(rdd)
-bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
-rdd_simple <- RDestimate(probation_year1 ~ dist_from_cut, data = data1, cutpoint = 0, bw = bw)
-summary(rdd_simple)
-plot(rdd_simple)
+
+clean_cut <- clean_cut %>% 
+  mutate(freq = 1)
+
+# replace variable freq by quantity in each group of dist_from_cut_round10
+clean_cut1 <- clean_cut%>% 
+  group_by(dist_from_cut_med10) %>% 
+  mutate(freq = length(freq))
 ```
 
-RDD using characteristics - Not sure if everything is correct, I have values but I need to read further to figure out how to interpret
+RDDTools
 ```{r}
-bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
-RDD_data1 = function(y)
-{
-    RDDmodel = RDestimate(y ~ dist_from_cut , data = data1, cutpoint = 0, bw = bw, model = TRUE)
-}
-myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
-chardata <- data1[myvars]
-RDDanswer = lapply(chardata, RDD_data1)
-RDDanswer
+library(dplyr)
+library(rddtools)
+Data1_all_rdd_same <- rdd_data(x=clean_cut1$dist_from_cut, y=clean_cut1$freq,cutpoint = 0) 
+Data1_all_para_rdd_same <- rdd_reg_lm(rdd_object=Data1_all_rdd_same, slope = "same") 
+summary(Data1_all_para_rdd_same)
+rdplot(x=clean_cut1$dist_from_cut, y=clean_cut1$freq,  kernel = 'triangular', binselect = 'qspr')
 ```
 
-
+________________________________________________________________________________________________________
+##Trial of different regression disconinuity models
 https://bookdown.org/carillitony/bailey/chp11.html#fn34
 ```{r}
 library(tidyverse)
@@ -168,3 +166,28 @@ ggplot(data= clean_cut, aes(x = dist_from_cut, y = left_school, color = status))
        x = "Year 1 GPA minus Probation Cutoff",
        y = "Left University")
 ```
+
+
+RDD  - trial https://www.jepusto.com/rdd-interactions/
+```{r}
+library(rdd)
+bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
+rdd_simple <- RDestimate(probation_year1 ~ dist_from_cut, data = data1, cutpoint = 0, bw = bw)
+summary(rdd_simple)
+plot(rdd_simple)
+```
+
+RDD using characteristics - Not sure if everything is correct, I have values but I need to read further to figure out how to interpret
+```{r}
+bw <- with(data1, IKbandwidth(dist_from_cut, probation_year1, cutpoint = 0))
+RDD_data1 = function(y)
+{
+    RDDmodel = RDestimate(y ~ dist_from_cut , data = data1, cutpoint = 0, bw = bw, model = TRUE)
+}
+myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
+chardata <- data1[myvars]
+RDDanswer = lapply(chardata, RDD_data1)
+RDDanswer
+```
+
+
