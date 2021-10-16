@@ -1,0 +1,16 @@
+Study: 
+Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation." American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95 
+
+
+The above paper uses data of student academic standing over the period of their studies to predict the effect of placing students who fail to meet a minimum academic standard on probation. Universities, to ensure all students meet a minimum academic standard, implement a minimum Grade Point Average (GPA) that, if not met, the student is placed on academic probtaion. The student then must increase their subsequent year GPA as well as increase their average GPA to meet this minimum, otherwise risk academic suspension.
+
+The study uses the collected data to determine:
+- if student characteristics (e.g. age, sex, high school grades, first language) are able to be used to predict if a student is likely to be placed on academic probation in their first year, 
+- if by being placed on academic probation, it increases the likelihood of the student being placed on academic probation in future years of study. 
+
+This report will replicate the following analyses of the selected report:
+- Table 1 summary statistics
+- Table 2 Estimated discontinuities in observable Characteristics
+- Figure 1 Distrbution of student grades relavent to their cutoff
+
+The free roam section of the report looks at...............
