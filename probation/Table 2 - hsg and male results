@@ -74,28 +74,12 @@ clean_cut %>%
 ```
 
 
-
-```{r}
-myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
-chardata <- clean_cut[myvars]
-```
-
-
-#Assessment of HS Grade
+#Assessment of HS Grade using flawed data to try to match to previous replication
 ```{r}
 Data06_hsg_rdd_prob <- rdd_data(x=data06$dist_from_cut, y=data06$hsgrade_pct,cutpoint = 0) 
 Data06_hsg_rdd_prob <- rdd_reg_lm(rdd_object=Data06_hsg_rdd_prob, slope = "separate") 
 summary(Data06_hsg_rdd_prob)
 rdplot(x=data06$dist_from_cut, y=data06$hsgrade_pct,  kernel = 'triangular')
-```
-
-```{r}
-clean_cut %>% 
-  ggplot(aes(x = dist_from_cut, y = hsgrade_pct, color=clean_cut$dist_from_cut>=0)) + 
-  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
-  geom_smooth(method = "lm", se = FALSE)+
-  geom_vline(xintercept = 0) + 
-  labs(y = "High Schoold Grade (%)", x = "GPA distance from cutoff")
 ```
 
 
@@ -107,11 +91,3 @@ summary(Data06_male_rdd_prob)
 rdplot(x=data06$dist_from_cut, y=data06$male,  kernel = 'triangular')
 ```
 
-```{r}
-clean_cut %>% 
-  ggplot(aes(x = dist_from_cut, y = male, color=clean_cut$dist_from_cut>=0)) + 
-  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
-  geom_smooth(method = "lm", se = FALSE)+
-  geom_vline(xintercept = 0) + 
-  labs(y = "Sex (Male=1)", x = "GPA distance from cutoff")
-```
