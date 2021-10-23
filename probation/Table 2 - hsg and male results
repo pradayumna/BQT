@@ -1,0 +1,117 @@
+---
+title: "project Summaries_Plots"
+author: "L Higson"
+date: "15/10/2021"
+output: html_document
+---
+
+```{r}
+library(foreign)
+library(dplyr)
+library(rddtools)
+library(rdd)
+library(rdrobust)
+library(ggplot2)
+
+data_main <- read.dta("~/ECOM5002/Project/data.dta")
+```
+
+Now, we will drop data points that are not in the range
+
+```{r, include=FALSE}
+data14 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
+data12 <- data_main[data_main$dist_from_cut > -1.2 & data_main$dist_from_cut < 1.2, ]
+data1 <- data_main[data_main$dist_from_cut > -1.0 & data_main$dist_from_cut < 1.0, ]
+data06 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+```
+
+##RDDTools
+#All data sharp regression
+```{r}
+Data06_all_rdd_prob <- rdd_data(x=data06$dist_from_cut, y=data06$probation_year1,cutpoint = 0) 
+Data06_all_para_rdd_prob <- rdd_reg_lm(rdd_object=Data06_all_rdd_prob, slope = "separate") 
+summary(Data06_all_para_rdd_prob)
+```
+#Shows there are data (administration errors) where students below the cutoff were not put on probation and vice versa
+```{r}
+data06 %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1, color=data06$dist_from_cut>0)) + 
+  geom_point(aes(color=data06$dist_from_cut>0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "On Probation (First Yr)", x = "GPA distance from cutoff")
+```
+
+##Remove conflicting arguments
+```{r eval=FALSE, include=FALSE}
+clean_cut <- data06 %>% 
+  filter((dist_from_cut < 0 & probation_year1 ==1)| (dist_from_cut >=0 & probation_year1 ==0) )
+```
+
+```{r}
+clean_cut %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1, color=clean_cut$dist_from_cut>=0)) + 
+  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "On Probation (First Yr)", x = "GPA distance from cutoff")
+```
+
+```{r}
+Data06_all_rdd_prob_cl <- rdd_data(x=clean_cut$dist_from_cut, y=clean_cut$probation_year1,cutpoint = 0) 
+Data06_all_para_rdd_prob_cl <- rdd_reg_lm(rdd_object=Data06_all_rdd_prob_cl, slope = "separate") 
+summary(Data06_all_para_rdd_prob_cl)
+rdplot(x=clean_cut$dist_from_cut, y=clean_cut$probation_year1,  kernel = 'triangular')
+```
+
+```{r}
+clean_cut %>% 
+  ggplot(aes(x = dist_from_cut, y = probation_year1, color=clean_cut$dist_from_cut>=0)) + 
+  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "On Probation (First Yr)", x = "GPA distance from cutoff")
+```
+
+
+
+```{r}
+myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
+chardata <- clean_cut[myvars]
+```
+
+
+#Assessment of HS Grade
+```{r}
+Data06_hsg_rdd_prob <- rdd_data(x=data06$dist_from_cut, y=data06$hsgrade_pct,cutpoint = 0) 
+Data06_hsg_rdd_prob <- rdd_reg_lm(rdd_object=Data06_hsg_rdd_prob, slope = "separate") 
+summary(Data06_hsg_rdd_prob)
+rdplot(x=data06$dist_from_cut, y=data06$hsgrade_pct,  kernel = 'triangular')
+```
+
+```{r}
+clean_cut %>% 
+  ggplot(aes(x = dist_from_cut, y = hsgrade_pct, color=clean_cut$dist_from_cut>=0)) + 
+  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "High Schoold Grade (%)", x = "GPA distance from cutoff")
+```
+
+
+#Assessment of being Male
+```{r}
+Data06_male_rdd_prob <- rdd_data(x=data06$dist_from_cut, y=data06$male,cutpoint = 0) 
+Data06_male_rdd_prob <- rdd_reg_lm(rdd_object=Data06_male_rdd_prob, slope = "separate") 
+summary(Data06_male_rdd_prob)
+rdplot(x=data06$dist_from_cut, y=data06$male,  kernel = 'triangular')
+```
+
+```{r}
+clean_cut %>% 
+  ggplot(aes(x = dist_from_cut, y = male, color=clean_cut$dist_from_cut>=0)) + 
+  geom_point(aes(color=clean_cut$dist_from_cut>=0)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "Sex (Male=1)", x = "GPA distance from cutoff")
+```
