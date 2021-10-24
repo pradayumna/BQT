@@ -62,7 +62,7 @@ val_check = function(x)
 
 myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
 chardata <- data1[myvars]
-colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+#colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
 answer = lapply(chardata, val_check)
 table2 = do.call(rbind.data.frame, answer)
 colnames(table2) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
@@ -73,3 +73,87 @@ formattable(table2,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
+#RDD Analysis
+##creating subsets 
+```{r}
+hsg_gr_med <- subset(data1, hsgrade_pct>50)
+hsg_ls_med <- subset(data1, hsgrade_pct<=50)
+male_data <- subset(data1, male==1)
+female_data <- subset(data1,male==0)
+Eng_data <- subset(data1,english==1)
+noeng_data <- subset(data1,noenglish==1)
+
+Data_sets <- list(data1,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+```
+
+# RDD Analysis
+# left-school
+```{r}
+left_school_fn = function(x)
+{
+  model3 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+
+answer = lapply(Data_sets, left_school_fn)
+table4 = do.call(rbind.data.frame, answer)
+colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table4) <- myvars
+formattable(table4, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
+
+
+
+```{r}
+grad6_fn = function(x)
+{
+  model4 = lm(gradin6 ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model4, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+
+answer = lapply(Data_sets, grad6_fn)
+table5 = do.call(rbind.data.frame, answer)
+colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table5) <- myvars
+formattable(table5, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
+#RDD Analysis 
+#Next GPA 
+
+```{r}
+nextGPA_fn = function(x)
+{
+  model5 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model5, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+answer = lapply(Data_sets, nextGPA_fn)
+table6 = do.call(rbind.data.frame, answer)
+colnames(table6) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table6) <- myvars
+formattable(table6, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
+
