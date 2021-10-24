@@ -1,0 +1,98 @@
+---
+title: "Project_Leaving School data"
+author: "L Higson"
+date: "23/10/2021"
+output: html_document
+---
+
+##Table 4
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(foreign)
+library(dplyr)
+library(rddtools)
+library(rdd)
+library(rdrobust)
+library(ggplot2)
+library(sandwich)
+library(lmtest)
+library(dplyr)
+library(formattable)
+
+data_main <- read.dta("~/ECOM5002/Project/data.dta")
+```
+
+#Now, we will drop data points that are not in the range
+```{r, include=FALSE}
+data06 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+```
+
+##left school
+
+```{r}
+median(data_main$hsgrade_pct)
+```
+##new datasets 
+```{r}
+hsg_gr_med <- subset(data06, hsgrade_pct>50)
+hsg_ls_med <- subset(data06, hsgrade_pct<=50)
+male_data <- subset(data06, male==1)
+female_data <- subset(data06,male==0)
+Eng_data <- subset(data06,english==1)
+noeng_data <- subset(data06,noenglish==1)
+
+Data_sets <- list(data06,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+
+Coef_dataset_trial <- list(data06,male_data)
+
+```
+
+#single variable working
+```{r}
+left_school = function(x)
+{
+  model1 = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = data06)
+  a = coeftest(model1)
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+var <- c(data06$left_school)
+left_school(var)
+```
+
+##multivariables working
+```{r}
+left_school_fn = function(x)
+{
+  model2 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+a = coeftest(model, vcov. = 'vcovCL')#clustervar missing
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+  }
+answer = lapply(Coef_dataset_trial, left_school_fn)
+
+answer
+```
+
+##Put into table
+```{r}
+left_school_fn = function(x)
+{
+  model3 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+a = coeftest(model3) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+
+answer = lapply(Data_sets, left_school_fn)
+table4 = do.call(rbind.data.frame, answer)
+colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table4) <- myvars
+table4
+```

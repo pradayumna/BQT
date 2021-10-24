@@ -1,0 +1,60 @@
+---
+title: "Project_Graduation data"
+author: "L Higson"
+date: "23/10/2021"
+output: html_document
+---
+
+##Table 10
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(foreign)
+library(dplyr)
+library(rddtools)
+library(rdd)
+library(rdrobust)
+library(ggplot2)
+
+data_main <- read.dta("~/ECOM5002/Project/data.dta")
+```
+
+Now, we will drop data points that are not in the range
+
+```{r, include=FALSE}
+data06 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+```
+
+```{r}
+hsg_gr_med <- subset(data06, hsgrade_pct>50)
+hsg_ls_med <- subset(data06, hsgrade_pct<=50)
+male_data <- subset(data06, male==1)
+female_data <- subset(data06,male==0)
+Eng_data <- subset(data06,english==1)
+noeng_data <- subset(data06,noenglish==1)
+
+Data_sets <- list(data06,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+
+```
+
+```{r}
+grad6_fn = function(x)
+{
+  model4 = lm(gradin6 ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+a = coeftest(model4) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+
+myvars2 = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+
+answer = lapply(Data_sets, grad6_fn)
+table10 = do.call(rbind.data.frame, answer)
+colnames(table10) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table10) <- myvars
+table10
+```
