@@ -8,9 +8,30 @@ The study uses the collected data to determine:
 - if student characteristics (e.g. age, sex, high school grades, first language) are able to be used to predict if a student is likely to be placed on academic probation in their first year, 
 - if by being placed on academic probation, it increases the likelihood of the student being placed on academic probation in future years of study. 
 
-This report will replicate the following analyses of the selected report:
-- Table 1 summary statistics
-- Table 2 Estimated discontinuities in observable Characteristics
-- Figure 1 Distrbution of student grades relavent to their cutoff
 
-The free roam section of the report looks at...............
+Section os the report:
+OVERVIEW
+overview of paper including main outcomes. 
+overivew of replicated elements
+
+DESCRIPTIVE REPLICATION
+correctly sourced image of the publised results
+
+INFERENTIAL REPLICATION
+correctly sourced image of the original
+replication process and issues encountered during replication
+
+FIGURE REPLICATION
+correctly sourced image of the original
+replication process and issues encountered during replication
+
+CRITICAL ASSESSMENT
+critque of replicated analysis
+include assumptions(with test fo assumptions where required), process and pitfalls
+
+FREE ROAM
+Rational for free roam choice and discussion of implications
+
+
+CODE
+Ensure it is commented and runs with no errors
