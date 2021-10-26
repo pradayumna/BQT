@@ -1,13 +1,49 @@
+---
+title: "BQT_Project"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+  
+# Replication of Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation."   
+## American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+### Overview  
+Universities, to ensure all students meet a minimum academic standard, implement a minimum Grade Point Average (GPA) that, if not met, results in the student being placed on academic probation. The student must then increase their subsequent year and average GPA to meet this minimum, otherwise risk academic suspension.  
+The above paper uses data of students academic standing over the period of their studies to assess the effect of placing students who fail to meet a minimum academic standard on probation.  
+
+The data includes a number of student characteristics (e.g. age, sex, high school grades, first language, birthplace) which are assessed to determine if any particular characteristic shows a correlation to a decision to leave or continue studying.   
+
+The regression discontinuity model is used to perform the analysis as it can assess if there is a significant difference in the outcomes between the treatment group (those placed on academic suspension) and the control group (those not placed on academic suspension).  
+
+The descriptive analyses replicated from the study are:  
+- discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold.    
+- assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
+
+The inferential analyses replicated from the study are:  
+- if being placed on academic probation impacts the likelihood of the student leaving university the year following probation,    
+- if being placed on probation affects the likelihood of graduating.  
+Figures associated with each of these analysis will also be replicated.  
+
+The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if these characteristics further support or contradict the findings.  
+
+During the review of data it was noted that there are discrepancies in the data range reported in the original study and that provided for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
+
+```{r, echo=FALSE}
+summary(data_main$firstyear)
+```
+_______________________________________________________________________________________
+
+
+
+
+
 Study: 
 Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation." American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95 
-
-
-The above paper uses data of student academic standing over the period of their studies to predict the effect of placing students who fail to meet a minimum academic standard on probation. Universities, to ensure all students meet a minimum academic standard, implement a minimum Grade Point Average (GPA) that, if not met, the student is placed on academic probtaion. The student then must increase their subsequent year GPA as well as increase their average GPA to meet this minimum, otherwise risk academic suspension.
-
-The study uses the collected data to determine:
-- if student characteristics (e.g. age, sex, high school grades, first language) are able to be used to predict if a student is likely to be placed on academic probation in their first year, 
-- if by being placed on academic probation, it increases the likelihood of the student being placed on academic probation in future years of study. 
-
 
 Section os the report:
 OVERVIEW
