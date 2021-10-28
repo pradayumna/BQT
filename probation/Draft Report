@@ -20,21 +20,170 @@ The data includes a number of student characteristics (e.g. age, sex, high schoo
 
 The regression discontinuity model is used to perform the analysis as it can assess if there is a significant difference in the outcomes between the treatment group (those placed on academic suspension) and the control group (those not placed on academic suspension).  
 
+The paper selected suggested that when students are placed on academic probation it can result in students not returning to university in the following year, and for those students who do return, an increase in their performance. When the observable characteristics are assessed, male students are more likely to drop out than female students when put on academic probation.  
+
 The descriptive analyses replicated from the study are:  
-- discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold.    
-- assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
+- Statistical data of the observational data  
+_- discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold._# if we have time to add it to the code
+
 
 The inferential analyses replicated from the study are:  
+- assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
 - if being placed on academic probation impacts the likelihood of the student leaving university the year following probation,    
 - if being placed on probation affects the likelihood of graduating.  
 Figures associated with each of these analysis will also be replicated.  
 
-The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if these characteristics further support or contradict the findings.  
+The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
 
-During the review of data it was noted that there are discrepancies in the data range reported in the original study and that provided for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
-
+Moat data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year) it was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
 ```{r, echo=FALSE}
+library(foreign)
+data_main <- read.dta("~/ECOM5002/Project/data.dta")
 summary(data_main$firstyear)
+```
+This has resulted in the inability replicate the results exactly as per the original report.
+
+It was also noted that the data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation  _insert plot_  
+This data has been left in the analysis as we cannot confirm the accuracy of this data and therefore do not have sufficient justification  to remove it.
+
+
+### Descriptive Replication  
+The data provided is based on GPA results from three different university campuses, one of which has a different cutoff GPA from the others. To allow for the use of all data based on the same cutoff point the original data includes an output variable of the students GPA distance from the specific campuses GPA cutoff. Using this value the cutoff point is set as 0. The data provided spans a bandwidth of 1.4 GPA points above and below the probation cutoff (0), however the descriptive and inferential analyses replicated were performed in the original study using the data with a bandwidth of either 1.2 GPA points above and below the probation cutoff or 0.6 points above and below the GPA  probation cutoff.  
+```{r, echo = FALSE}
+data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+data2 <- data_main[data_main$dist_from_cut > -1.2 & data_main$dist_from_cut < 1.2, ]
+```
+
+Table 1 is the descriptive statistics for the data and replicates Table 1 in the original study. Results are similar to the original report descriptive statistics with male students representing 38% of the sample and 87% of students born in North America.  
+```{r, echo = FALSE, warning=FALSE}
+library(qwraps2)
+library(formattable)
+descriptive_summary <- list("Characterisitcs" = list('High School Grade Percentile' =~ qwraps2::mean_sd(hsgrade_pct),
+                                                     'Credits Attempted in First Year' =~ qwraps2::mean_sd(totcredits_year1),
+                                                     'Age at entry' =~ qwraps2::mean_sd(age_at_entry),
+                                                     'male' =~ qwraps2::mean_sd(male),
+                                                     'English is First Language' =~ qwraps2::mean_sd(english),
+                                                     'Born in North America' =~ qwraps2::mean_sd(bpl_north_america),
+                                                     'At Campus 1' =~ qwraps2::mean_sd(loc_campus1),
+                                                     'At Campus 2' =~ qwraps2::mean_sd(loc_campus2),
+                                                     'At Campus 3' =~ qwraps2::mean_sd(loc_campus3)), 
+                            "Outcomes" = list('Distance from Cutoff in 1st Year' =~ qwraps2::mean_sd(dist_from_cut),
+                                              'On Probation After 1st Year' =~ qwraps2::mean_sd(probation_year1),
+                                              'Ever on Academic Probation' =~ qwraps2::mean_sd(probation_ever),
+                                              'Left University after 1st Evaluation' =~ qwraps2::mean_sd(left_school),
+                                              'Distance from Cutoff Next Evaluation' =~ qwraps2::mean_sd(nextGPA, na_rm = TRUE, show_n = 'never'),
+                                              'Ever Suspended' =~ qwraps2::mean_sd(suspended_ever, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 4' =~ qwraps2::mean_sd(gradin4, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 5' =~ qwraps2::mean_sd(gradin5, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 6' =~ qwraps2::mean_sd(gradin6, na_rm = TRUE, show_n = 'never')))
+options(qwraps2_markup = "markdown")
+table1 = summary_table(data1, descriptive_summary)
+```
+
+```{r, echo = FALSE, warning=FALSE}
+library(knitr)
+kable(table1, caption = 'Table 1')
+```
+
+
+#testing for conditions of RDD
+```{r}
+library(sandwich)
+library(lmtest)
+library(dplyr)
+val_check = function(x)
+{
+  model = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = data1)
+  a = coeftest(model, vcov = vcovCL, cluster = data1$clustervar)
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
+chardata <- data1[myvars]
+#colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(chardata, val_check)
+table2 = do.call(rbind.data.frame, answer)
+colnames(table2) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table2) <- myvars
+formattable(table2, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
+#RDD Analysis
+##creating subsets 
+```{r}
+hsg_gr_med <- subset(data1, hsgrade_pct>50)
+hsg_ls_med <- subset(data1, hsgrade_pct<=50)
+male_data <- subset(data1, male==1)
+female_data <- subset(data1,male==0)
+Eng_data <- subset(data1,english==1)
+noeng_data <- subset(data1,noenglish==1)
+Data_sets <- list(data1,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+```
+
+# RDD Analysis
+# left-school
+```{r}
+left_school_fn = function(x)
+{
+  model3 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(Data_sets, left_school_fn)
+table4 = do.call(rbind.data.frame, answer)
+colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table4) <- myvars
+formattable(table4, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
+
+
+
+```{r}
+grad6_fn = function(x)
+{
+  model4 = lm(gradin6 ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model4, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(Data_sets, grad6_fn)
+table5 = do.call(rbind.data.frame, answer)
+colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table5) <- myvars
+formattable(table5, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
+#RDD Analysis 
+#Next GPA 
+
+```{r}
+nextGPA_fn = function(x)
+{
+  model5 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model5, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+answer = lapply(Data_sets, nextGPA_fn)
+table6 = do.call(rbind.data.frame, answer)
+colnames(table6) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table6) <- myvars
+formattable(table6, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
 _______________________________________________________________________________________
 
