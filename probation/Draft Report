@@ -55,10 +55,10 @@ This data has been left in the analysis as we cannot confirm the accuracy of thi
 
 
 ### Descriptive Replication  
-The data provided is based on GPA results from three different university campuses, one of which has a different cutoff GPA from the others. To allow for the use of all data based on the same cutoff point the original data includes an output variable of the students GPA distance from the specific campuses GPA cutoff. Using this value the cutoff point is set as 0. The data provided spans a bandwidth of 1.4 GPA points above and below the probation cutoff (0), however the descriptive and inferential analyses replicated were performed in the original study using the data with a bandwidth of either 1.2 GPA points above and below the probation cutoff or 0.6 points above and below the GPA  probation cutoff.  
+The data provided is based on GPA results from three different university campuses, one of which has a different cutoff GPA from the others. To allow for the use of all data based on the same cutoff point the original data includes an output variable of the students GPA distance from the specific campuses GPA cutoff. Using this value the cutoff point is set as 0. The data provided spans a bandwidth of 1.4 GPA points above and below the probation cutoff (0).  
 ```{r, echo = FALSE}
-data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
-data2 <- data_main[data_main$dist_from_cut > -1.2 & data_main$dist_from_cut < 1.2, ]
+data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
+data_clean <- subset(data1, left_school==0)
 ```
 
 Table 1 is the descriptive statistics for the data and replicates Table 1 in the original study. Results are similar to the original report descriptive statistics with male students representing 38% of the sample and 87% of students born in North America.  
@@ -90,6 +90,20 @@ kable(table1, caption = 'Table 1')
 ```
 
 ### Inferential Replication
+#### Testing for Regression Analysis Assumptions
+In order to use a Linear Regression model the following assumptions have to be met:  
+1. Expected value of fitted values (residuals) are 0  
+2. Variables of the residuals are constant and doesn't depend on I  
+3. The error (residual) of one observation is independent of the error of another  
+4. For statistical inference, the residuals are normally distributed, centred around zero, and have a constant variance.  
+As the assessment we are replicating is the impact of being put on probation to a students next GPA result, this data was assessed to confirm that it meets the above assumptions.
+```{r}
+glm <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean)
+plot(glm)
+```
+
+
+
 #### Testing for conditions of RDD  
 The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; the cutoff is 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
 RDD measures the change in the probability at c (the discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
@@ -98,20 +112,20 @@ The first year GPA results are used to reduce the likelihood of bias as students
 As we do not have a sample of students who were not put on academic probation when below the cutoff to compare with, the frequency of the GPA results is used to assess if there is an observed jump at the cutoff. Figure 1 shows the regression of the frequency of the distance from cutoff values and is continuous through the cutoff point.  
 Figure 1 replicates Figure 1 in the original report.
 ```{r, echo = FALSE, warning=FALSE}
-data2A <- data2 %>% 
+data1A <- data1 %>% 
   mutate(freq = 1)
 
 # replace variable freq by quantity in each group of dist_from_cut_round10
-data2A <- data2A%>% 
+data1A <- data1A%>% 
   group_by(dist_from_cut_med10) %>% 
   mutate(freq = length(freq))
 
 ```
 
 ```{r, echo = FALSE, warning=FALSE}
-data2A %>% 
+data1A %>% 
   ggplot(aes(x = dist_from_cut_med10, y = freq)) + 
-  geom_point(aes(color=data2A$dist_from_cut>0)) +
+  geom_point(aes(color=data1A$dist_from_cut>0)) +
   geom_smooth(method = "glm", formula = y ~ poly(x, 3), se = FALSE)+
   geom_vline(xintercept = 0) + 
   labs(y = "Frequency count", x = "GPA distance from cutoff")
@@ -122,12 +136,12 @@ Table 2 replicates Table 2 in the original report.
 ```{r, echo = FALSE, warning=FALSE}
 val_check = function(x)
 {
-  model = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = data1)
-  a = coeftest(model, vcov = vcovCL, cluster = data1$clustervar)
+  model = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean)
+  a = coeftest(model, vcov = vcovCL, cluster = data_clean$clustervar)
   c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
 }
 myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
-chardata <- data1[myvars]
+chardata <- data_clean[myvars]
 #colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
 answer = lapply(chardata, val_check)
 table2 = do.call(rbind.data.frame, answer)
@@ -146,77 +160,31 @@ Assessment of the assumption that data is continuous through the threshold (and 
 #### RDD Analysis
 ```{r}
 ##creating subsets 
-hsg_gr_med <- subset(data1, hsgrade_pct>50)
-hsg_ls_med <- subset(data1, hsgrade_pct<=50)
-male_data <- subset(data1, male==1)
-female_data <- subset(data1,male==0)
-Eng_data <- subset(data1,english==1)
-noeng_data <- subset(data1,noenglish==1)
-Data_sets <- list(data1,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+hsg_gr_med <- subset(data_clean, hsgrade_pct>50)
+hsg_ls_med <- subset(data_clean, hsgrade_pct<=50)
+male_data <- subset(data_clean, male==1)
+female_data <- subset(data_clean,male==0)
+Eng_data <- subset(data_clean,english==1)
+noeng_data <- subset(data_clean,noenglish==1)
+Data_sets <- list(data_clean,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
 ```
 
-##### Impact of Academic Probation on the Decision to Leave School
+##### Impact of Academic Probation on the next GPA result
 The first inferential data replicated is the decision to continue studying or to leave university following being placed on probation after the first year. Table 3 replicates Table 4 and 5 in the original report using the bandwidth 0.6 GPA points above and below the cutoff. Note that table 4 in the original report only provides data with a threshold of 1.4.
 ```{r}
-left_school_fn = function(x)
+nextGPA_fn = function(x)
 {
-  model3 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
-  a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
+  model3 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) 
   c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
 }
 myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
 colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
-answer = lapply(Data_sets, left_school_fn)
+answer = lapply(Data_sets, nextGPA_fn)
 table4 = do.call(rbind.data.frame, answer)
 colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
 rownames(table4) <- myvars
 formattable(table4, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
-```
-Results of the above table show the likelihood of a student leaving university after the first year of being placed on academic probation is significant at the 5% level for all data, male students and students with English as their first language. High school grade results are significant at the 10% level.    
-Based on these results there is an overall 1.8% increase in the likelihood of a student leaving university after the first year if put on probation.  
-There is a 1.5% 2.8% increase respectively for male students and students with English as their first language to leave university after the first year when placed on academic probation.
-Although the figures do not exactly replicate those in the original study (due the data differences mentioned above), the finding of this assessment are consistent in that being placed on academic probation after the first year increases the probability that a student will leave at the end of the first year.  
-
-#### Probability of Graduation after Academic Probation in the First Year
-The second inferential data replicated is the likelihood of graduating in 6 years. The original results are found in Table 10 of the original report.
-```{r}
-grad6_fn = function(x)
-{
-  model4 = lm(gradin6 ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
-  a = coeftest(model4, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
-  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
-}
-myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
-colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
-answer = lapply(Data_sets, grad6_fn)
-table5 = do.call(rbind.data.frame, answer)
-colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table5) <- myvars
-formattable(table5, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
-```
-#RDD Analysis 
-#Next GPA 
-
-```{r}
-nextGPA_fn = function(x)
-{
-  model5 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
-  a = coeftest(model5, vcov = vcovCL, cluster = x$clustervar) #other attributes and clustervar removed
-  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
-}
-answer = lapply(Data_sets, nextGPA_fn)
-table6 = do.call(rbind.data.frame, answer)
-colnames(table6) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table6) <- myvars
-formattable(table6, 
             align =c("c","c","c","c","c", "c"), 
             list(`Indicator Name` = formatter(
               "span", style = ~ style(color = "grey",font.weight = "bold")),
