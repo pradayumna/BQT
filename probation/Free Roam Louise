@@ -5,52 +5,59 @@ date: "25/10/2021"
 output: html_document
 ---
 
-```{r}
+```{r error=FALSE, warning=FALSE, include=FALSE}
+library(qwraps2)
+library(formattable)
+library(knitr)
 library(foreign)
+library(ggplot2)
+library(sandwich)
+library(lmtest)
+library(dplyr)
 data_main <- read.dta("~/ECOM5002/Project/data.dta")
 ```
 
-Now, we will drop data points that are not in the range
-```{r}
-data1 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]
+```{r, echo=FALSE}
+summary(data_main$firstyear)
+```
+ 
+```{r, echo = FALSE}
+data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
+data_clean <- subset(data1, left_school==0)
 ```
 
 #RDD Analysis
 ##creating subsets for Free Roam
 ```{r}
-Age_17 <- subset(data1, age_at_entry==17)
-Age_18 <- subset(data1, age_at_entry==18)
-Age_19 <- subset(data1, age_at_entry==19)
-Age_20 <- subset(data1, age_at_entry==20)
-Age_21 <- subset(data1, age_at_entry==21)
+Age_17 <- subset(data_clean, age_at_entry==17)
+Age_18 <- subset(data_clean, age_at_entry==18)
+Age_19 <- subset(data_clean, age_at_entry==19)
+Age_20 <- subset(data_clean, age_at_entry==20)
+Age_21 <- subset(data_clean, age_at_entry==21)
 
-BP_NA <- subset(data1,bpl_north_america==1)
-BP_other <- subset(data1,bpl_north_america==0)
-
-
-Data_sets2 <- list(data1,Age_17,Age_18,Age_19,Age_20,Age_21, BP_NA,BP_other)
-
-Sl_lv <- subset(data1, age_at_entry<=19)
-mat_age <- subset(data1, age_at_entry>19)
-
-Data_sets3 <- list(data1,Sl_lv, mat_age)
+BP_NA <- subset(data_clean,bpl_north_america==1)
+BP_other <- subset(data_clean,bpl_north_america==0)
 
 
+Data_sets2 <- list(data_clean,Age_17,Age_18,Age_19,Age_20,Age_21, BP_NA,BP_other)
+
+Sl_lv <- subset(data_clean, age_at_entry<=19)
+mat_age <- subset(data_clean, age_at_entry>19)
+
+Data_sets3 <- list(data_clean,Sl_lv, mat_age)
 ```
 
-# RDD Analysis
-# Free roam left-school
 ```{r}
 FR_fn = function(x)
 {
-  model6 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  model6 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
   a = coeftest(model6, vcov = vcovCL, cluster = x$clustervar) 
   c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
 }
 myvars = c('All Data', 'Age entry = 17','Age entry = 18','Age entry = 19','Age entry = 20','Age entry = 21', 'Birth place Nth America', 'Birth place Other')
 colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
-answer = lapply(Data_sets2, FR_fn)
-table5 = do.call(rbind.data.frame, answer)
+answer2 = lapply(Data_sets2, FR_fn)
+table5 = do.call(rbind.data.frame, answer2)
 colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
 rownames(table5) <- myvars
 table5
@@ -61,68 +68,3 @@ formattable(table5,
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
 
-# Free roam left-school - ages grouped
-```{r}
-FR_fn1 = function(x)
-{
-  model7 = lm(left_school ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
-  a = coeftest(model7, vcov = vcovCL, cluster = x$clustervar) 
-  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
-}
-myvars = c('All Data', 'Sl_lv','mat_age')
-colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
-answer = lapply(Data_sets3, FR_fn1)
-table6 = do.call(rbind.data.frame, answer)
-colnames(table6) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table6) <- myvars
-table6
-formattable(table6, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
-```
-
-# Free roam Graduated in 6 years
-```{r}
-FR_fn2 = function(x)
-{
-  model8 = lm(gradin6 ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
-  a = coeftest(model8, vcov = vcovCL, cluster = x$clustervar) 
-  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
-}
-myvars = c('All Data', 'Age entry = 17','Age entry = 18','Age entry = 19','Age entry = 20','Age entry = 21', 'Birth place Nth America', 'Birth place Other')
-colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
-answer = lapply(Data_sets2, FR_fn2)
-table7 = do.call(rbind.data.frame, answer)
-colnames(table7) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table7) <- myvars
-table7
-formattable(table7, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
-```
-
-# Free roam Graduated in 6 years - ages grouped
-```{r}
-FR_fn3 = function(x)
-{
-  model9 = lm(gradin6 ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
-  a = coeftest(model9, vcov = vcovCL, cluster = x$clustervar) 
-  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
-}
-myvars = c('All Data', 'Sl_lv','mat_age')
-colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
-answer = lapply(Data_sets3, FR_fn3)
-table8 = do.call(rbind.data.frame, answer)
-colnames(table8) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table8) <- myvars
-table8
-formattable(table8, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
-```
