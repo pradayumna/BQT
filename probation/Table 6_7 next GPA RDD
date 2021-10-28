@@ -1,0 +1,53 @@
+```{r error=FALSE, warning=FALSE, include=FALSE}
+library(qwraps2)
+library(formattable)
+library(knitr)
+library(foreign)
+library(ggplot2)
+library(sandwich)
+library(lmtest)
+library(dplyr)
+data_main <- read.dta("~/ECOM5002/Project/data.dta")
+```
+
+```{r, echo=FALSE}
+summary(data_main$firstyear)
+```
+
+
+```{r, echo=FALSE}
+data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
+data_clean <- subset(data1, left_school==0)
+```
+
+```{r}
+##creating subsets 
+hsg_gr_med <- subset(data_clean, hsgrade_pct>50)
+hsg_ls_med <- subset(data_clean, hsgrade_pct<=50)
+male_data <- subset(data_clean, male==1)
+female_data <- subset(data_clean,male==0)
+Eng_data <- subset(data_clean,english==1)
+noeng_data <- subset(data_clean,noenglish==1)
+Data_sets <- list(data_clean,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+```
+
+##### Impact of Academic Probation on the next GPA result
+```{r}
+nextGPA_fn = function(x)
+{
+  model3 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) 
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars2 = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(Data_sets, nextGPA_fn)
+table4 = do.call(rbind.data.frame, answer)
+colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table4) <- myvars2
+formattable(table4, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
