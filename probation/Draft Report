@@ -35,7 +35,7 @@ Figures associated with each of these analysis will also be replicated.
 The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
 
 Moat data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year) it was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning = FALSE}
 library(qwraps2)
 library(formattable)
 library(knitr)
@@ -45,11 +45,12 @@ library(sandwich)
 library(lmtest)
 library(dplyr)
 data_main <- read.dta("~/ECOM5002/Project/data.dta")
+
 summary(data_main$firstyear)
 ```
-This has resulted in the inability replicate the results exactly as per the original report.
+This has resulted in the inability replicate the results exactly as per the original report. A replication study of this original report was found **_reference_** and used to confirm results outputs in our replication are correct.  
 
-It was also noted that the data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation  _insert plot_  
+It was also noted that the original data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation  **_insert plot_**  
 This data has been left in the analysis as we cannot confirm the accuracy of this data and therefore do not have sufficient justification  to remove it.
 
 
@@ -92,9 +93,10 @@ kable(table1, caption = 'Table 1')
 #### Testing for conditions of RDD  
 The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
 RDD measures the change in the probability at c (discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
-RDD requires that outputs close to the cutoff are continuous and do not group just above or below. If this occurs it suggests that the data is biased. In the current study this would occur if the students, knowing the GPA cutoff, can manipulate their results to increase their GPA to just above the cutoff.  
-Figure 1
-
+RDD requires that outputs close to the cutoff are continuous and do not group just above or below. or, in the absence of treatment, the students would get the same GPA results. If grouping or a jump occurs at the cutoff, it suggests that the data is biased. In the current study this may occur if the students, knowing the GPA cutoff, manipulated their results to increase their GPA to just above the cutoff.  
+The first year GPA results are used to reduce the likelihood of bias as students are less likely to be aware of the GPA assessment and cutoff values.
+As we do not have a sample of students who were not put on academic probation when below the cutoff to compare with, the frequency of the GPA results is used to assess if there is an observed jump at the cutoff. Figure 1 shows the regression of the frequency of the distance from cutoff values and is continuous through the cutoff point.  
+Figure 1 replicates Figure 1 in the original report.
 ```{r, echo = FALSE, warning=FALSE}
 data2A <- data2 %>% 
   mutate(freq = 1)
@@ -115,7 +117,8 @@ data2A %>%
   labs(y = "Frequency count", x = "GPA distance from cutoff")
 ```
 
-
+The observable characteristics were also assessed to determine if these variables are also continuous through the threshold. If any of the observations show significant discontinuity it is possible that a student with that characteristic is able to manipulate their grade and avoid being placed on academic probation.
+Table 2 replicates Table 2 in the original report.
 ```{r, echo = FALSE, warning=FALSE}
 val_check = function(x)
 {
@@ -136,9 +139,13 @@ formattable(table2,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-#RDD Analysis
-##creating subsets 
+English as a first language and a birthplace of North America
+are the variables closest to being discontinuous however are not significant at the 5% level.   
+Assessment of the assumption that data is continuous through the threshold (and hence, not biased) is met.  
+
+#### RDD Analysis
 ```{r}
+##creating subsets 
 hsg_gr_med <- subset(data1, hsgrade_pct>50)
 hsg_ls_med <- subset(data1, hsgrade_pct<=50)
 male_data <- subset(data1, male==1)
@@ -148,8 +155,8 @@ noeng_data <- subset(data1,noenglish==1)
 Data_sets <- list(data1,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
 ```
 
-# RDD Analysis
-# left-school
+##### Impact of Academic Probation on the Decision to Leave School
+The first inferential data replicated is the decision to continue studying or to leave university following being placed on probation after the first year. Table 3 replicates Table 4 and 5 in the original report using the bandwidth 0.6 GPA points above and below the cutoff. Note that table 4 in the original report only provides data with a threshold of 1.4.
 ```{r}
 left_school_fn = function(x)
 {
@@ -169,7 +176,8 @@ formattable(table4,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-
+Results of the above table show the likelihood of a student leaving university after the first year of being placed on academic probation is significant at the 5% level for all data, male students and students with English as their first language. High school grade results are significant at the 10% level. Based on these results there is an overall 1.8% increase in the likelihood of a student leaving university after the first year if put on probation.  
+There is a 1.5% 2.8% increase respectively for male students and students with English as their first language to leave university after the first year when placed on academic probation.
 
 
 ```{r}
