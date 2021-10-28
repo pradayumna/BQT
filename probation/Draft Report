@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = FALSE)
 Universities, to ensure all students meet a minimum academic standard, implement a minimum Grade Point Average (GPA) that, if not met, results in the student being placed on academic probation. The student must then increase their subsequent year and average GPA to meet this minimum, otherwise risk academic suspension.  
 The above paper uses data of students academic standing over the period of their studies to assess the effect of placing students who fail to meet a minimum academic standard on probation.  
 
-The data includes a number of student characteristics (e.g. age, sex, high school grades, first language, birthplace) which are assessed to determine if any particular characteristic shows a correlation to a decision to leave or continue studying.   
+The data includes a number of student characteristics (e.g. age, sex, high school grades, first language, birthplace) which are assessed to determine if any particular characteristic shows an increase in probability of a decision to leave or continue studying.   
 
 The regression discontinuity model is used to perform the analysis as it can assess if there is a significant difference in the outcomes between the treatment group (those placed on academic suspension) and the control group (those not placed on academic suspension).  
 
@@ -29,7 +29,7 @@ The inferential analyses replicated from the study are:
 - discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold. 
 - assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
 - if being placed on academic probation impacts the likelihood of the student leaving university the year following probation,    
-- if being placed on probation affects the likelihood of graduating.  
+- if being placed on probation affects the prbability of graduating.  
 Figures associated with each of these analysis will also be replicated.  
 
 The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
@@ -91,9 +91,9 @@ kable(table1, caption = 'Table 1')
 
 ### Inferential Replication
 #### Testing for conditions of RDD  
-The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
-RDD measures the change in the probability at c (discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
-RDD requires that outputs close to the cutoff are continuous and do not group just above or below. or, in the absence of treatment, the students would get the same GPA results. If grouping or a jump occurs at the cutoff, it suggests that the data is biased. In the current study this may occur if the students, knowing the GPA cutoff, manipulated their results to increase their GPA to just above the cutoff.  
+The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; the cutoff is 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
+RDD measures the change in the probability at c (the discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
+RDD requires that outputs close to the cutoff are continuous and do not group just above or below the cutoff, and, in the absence of treatment, the student would get the same GPA results. If grouping or a jump occurs at the cutoff, it suggests that the data is biased. In the current study this may occur if the students, knowing the GPA cutoff, manipulated their results to increase their GPA to just above the cutoff.  
 The first year GPA results are used to reduce the likelihood of bias as students are less likely to be aware of the GPA assessment and cutoff values.
 As we do not have a sample of students who were not put on academic probation when below the cutoff to compare with, the frequency of the GPA results is used to assess if there is an observed jump at the cutoff. Figure 1 shows the regression of the frequency of the distance from cutoff values and is continuous through the cutoff point.  
 Figure 1 replicates Figure 1 in the original report.
@@ -117,7 +117,7 @@ data2A %>%
   labs(y = "Frequency count", x = "GPA distance from cutoff")
 ```
 
-The observable characteristics were also assessed to determine if these variables are also continuous through the threshold. If any of the observations show significant discontinuity it is possible that a student with that characteristic is able to manipulate their grade and avoid being placed on academic probation.
+The observable characteristics were also assessed to determine if these variables are also continuous through the threshold. If any of the observations show significant discontinuity it is possible that a student with that characteristic is able to manipulate their grade to avoid being placed on academic probation.
 Table 2 replicates Table 2 in the original report.
 ```{r, echo = FALSE, warning=FALSE}
 val_check = function(x)
@@ -176,10 +176,13 @@ formattable(table4,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-Results of the above table show the likelihood of a student leaving university after the first year of being placed on academic probation is significant at the 5% level for all data, male students and students with English as their first language. High school grade results are significant at the 10% level. Based on these results there is an overall 1.8% increase in the likelihood of a student leaving university after the first year if put on probation.  
+Results of the above table show the likelihood of a student leaving university after the first year of being placed on academic probation is significant at the 5% level for all data, male students and students with English as their first language. High school grade results are significant at the 10% level.    
+Based on these results there is an overall 1.8% increase in the likelihood of a student leaving university after the first year if put on probation.  
 There is a 1.5% 2.8% increase respectively for male students and students with English as their first language to leave university after the first year when placed on academic probation.
+Although the figures do not exactly replicate those in the original study (due the data differences mentioned above), the finding of this assessment are consistent in that being placed on academic probation after the first year increases the probability that a student will leave at the end of the first year.  
 
-
+#### Probability of Graduation after Academic Probation in the First Year
+The second inferential data replicated is the likelihood of graduating in 6 years. The original results are found in Table 10 of the original report.
 ```{r}
 grad6_fn = function(x)
 {
@@ -219,7 +222,9 @@ formattable(table6,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-_______________________________________________________________________________________
+
+
+___________________________________________________________________________________
 
 
 
