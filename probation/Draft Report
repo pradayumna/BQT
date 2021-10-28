@@ -26,6 +26,7 @@ The descriptive analyses replicated from the study are:
 - Statistical data of the observational data  
 
 The inferential analyses replicated from the study are:  
+- assessment of the linear model to confirm linear regression model assumptions are met.  
 - discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold. 
 - assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
 - if being placed on academic probation impacts the likelihood of the student leaving university the year following probation,    
@@ -50,9 +51,12 @@ summary(data_main$firstyear)
 ```
 This has resulted in the inability replicate the results exactly as per the original report. A replication study of this original report was found **_reference_** and used to confirm results outputs in our replication are correct.  
 
-It was also noted that the original data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation  **_insert plot_**  
-This data has been left in the analysis as we cannot confirm the accuracy of this data and therefore do not have sufficient justification  to remove it.
+It was also noted that the original data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation.
+```{r, echo = FALSE}
+plot(data1$dist_from_cut,data1$probation_year1, xlab = 'Distance from Cutoff', ylab = 'On Probation First year')
+```
 
+This data has been left in the analysis as we cannot confirm the accuracy of this data and therefore do not have sufficient justification  to remove it.  
 
 ### Descriptive Replication  
 The data provided is based on GPA results from three different university campuses, one of which has a different cutoff GPA from the others. To allow for the use of all data based on the same cutoff point the original data includes an output variable of the students GPA distance from the specific campuses GPA cutoff. Using this value the cutoff point is set as 0. The data provided spans a bandwidth of 1.4 GPA points above and below the probation cutoff (0).  
@@ -101,8 +105,10 @@ As the assessment we are replicating is the impact of being put on probation to 
 glm <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean)
 plot(glm)
 ```
-
-
+The residuals vs fitted values plot shows the data is distributed above and below the line suggesting there is a linear relationship between the x and y values. it is noted that there is a decreasing trend in the data.  
+The scale location plot suggest the residuals of the data do not have constant variance as the width of the data spread appears to increase.  
+The the data below approximately -1 quantile on the Q-Q plot departs from the line therefore it cannot be assumed that the data is normally distributed.  
+There are no significant outliers observed in the Residuals vs Leverage plot.
 
 #### Testing for conditions of RDD  
 The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; the cutoff is 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
@@ -190,7 +196,6 @@ formattable(table4,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-
 
 ___________________________________________________________________________________
 
