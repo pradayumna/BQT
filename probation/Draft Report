@@ -35,7 +35,7 @@ Figures associated with each of these analysis will also be replicated.
 
 The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
 
-Moat data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year) it was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
+Most data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year) it was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
 ```{r error=FALSE, warning=FALSE, include=FALSE}
 library(qwraps2)
 library(formattable)
@@ -51,7 +51,7 @@ data_main <- read.dta("~/ECOM5002/Project/data.dta")
 ```{r, echo=FALSE}
 summary(data_main$firstyear)
 ```
-This has resulted in the inability replicate the results exactly as per the original report. A replication study of this original report was found **_reference_** and used to confirm results outputs in our replication are correct.  
+This has resulted in the inability replicate the results exactly as per the original report.   
 
 It was also noted that the original data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation.
 ```{r, echo = FALSE}
@@ -121,10 +121,9 @@ $$
 Y{i}=\hat{\beta}_0+\hat{\beta}_1X{i}+\hat{\beta}_2W{i}+u_i
 $$
 $$
-
-  Xi = \left\{\begin{array}{l} 1,\ \ \ \ Wi \ge c \\
-    0,\ \ \ \ Wi < c
-  \end{array}\right\}
+Xi = \left\{\begin{array}{l} 1,\ \ \ \ Wi \ge c \\
+0,\ \ \ \ Wi < c
+\end{array}\right\}
 $$
 RDD measures the change in the probability at c (the discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
 RDD requires that outputs close to the cutoff are continuous and do not group just above or below the cutoff, and, in the absence of treatment, the student would get the same GPA results. If grouping or a jump occurs at the cutoff, it suggests that the data is biased. In the current study this may occur if the students, knowing the GPA cutoff, manipulated their results to increase their GPA to just above the cutoff.  
@@ -190,7 +189,7 @@ Data_sets <- list(data_clean,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_dat
 ```
 
 ##### Impact of Academic Probation on the next GPA result
-The first inferential data replicated is the decision to continue studying or to leave university following being placed on probation after the first year. Table 3 replicates Table 4 and 5 in the original report using the bandwidth 0.6 GPA points above and below the cutoff. Note that table 4 in the original report only provides data with a threshold of 1.4.
+The inferential data replicated is the impact of being placed on academic probation on the students subsequent GPA (of students who remain at university). It is noted in the original report that the assessment of impact on the subsequent GPA may be biased due to the loss of students (dropping out) after the first year. The removal of these student from the data can result in a positive impact as a number of students who would again have a GPA below the cutoff are not longer included in the sample. Detail on how the subsequent assessment in the original report to generate the conservative assessments is not provided therefore the replication performed is limited to removing students who have left school after the first year.
 ```{r}
 nextGPA_fn = function(x)
 {
@@ -198,19 +197,70 @@ nextGPA_fn = function(x)
   a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) 
   c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
 }
-myvars = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+myvars2 = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
 colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
 answer = lapply(Data_sets, nextGPA_fn)
 table4 = do.call(rbind.data.frame, answer)
 colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table4) <- myvars
+rownames(table4) <- myvars2
 formattable(table4, 
             align =c("c","c","c","c","c", "c"), 
             list(`Indicator Name` = formatter(
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
+Results of the above table show   
 
+#### Critical Assessment
+In replicating this data a number of issues were identified:
+- There is no confirmed assessment of linear regression assumptions, only RDD assumptions have been addressed.  
+- Data provided for replication is not the same as the data used in the report  
+- details of how the data has been cleaned and adapted to run the regression models has not been included or discussed.  
+
+_A replication study of this original report was found **_reference_**. Appendix 1 shows some of the replication of this report which does not use a quadratic term. Results of this report can be replicated exactly._
+
+
+#### Free Roam
+Data for the observable attributes of age and birthplace were not assessed as part of the original report. The free roam section of the report below assessed the impact of academic probation in the first year on the subsequent GPA based on the age of the student (when starting university) and the student birthplace (limited to North America or other).
+```{r}
+Age_17 <- subset(data_clean, age_at_entry==17)
+Age_18 <- subset(data_clean, age_at_entry==18)
+Age_19 <- subset(data_clean, age_at_entry==19)
+Age_20 <- subset(data_clean, age_at_entry==20)
+Age_21 <- subset(data_clean, age_at_entry==21)
+
+BP_NA <- subset(data_clean,bpl_north_america==1)
+BP_other <- subset(data_clean,bpl_north_america==0)
+
+
+Data_sets2 <- list(data_clean,Age_17,Age_18,Age_19,Age_20,Age_21, BP_NA,BP_other)
+
+Sl_lv <- subset(data_clean, age_at_entry<=19)
+mat_age <- subset(data_clean, age_at_entry>19)
+
+Data_sets3 <- list(data_clean,Sl_lv, mat_age)
+```
+
+```{r}
+FR_fn = function(x)
+{
+  model6 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model6, vcov = vcovCL, cluster = x$clustervar) 
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars = c('All Data', 'Age entry = 17','Age entry = 18','Age entry = 19','Age entry = 20','Age entry = 21', 'Birth place Nth America', 'Birth place Other')
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer2 = lapply(Data_sets2, FR_fn)
+table5 = do.call(rbind.data.frame, answer2)
+colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(table5) <- myvars
+table5
+formattable(table5, 
+            align =c("c","c","c","c","c", "c"), 
+            list(`Indicator Name` = formatter(
+              "span", style = ~ style(color = "grey",font.weight = "bold")),
+              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+```
 ___________________________________________________________________________________
 
 
