@@ -36,7 +36,7 @@ Figures associated with each of these analysis will also be replicated.
 The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
 
 Moat data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year) it was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
-```{r, echo=FALSE, warning = FALSE}
+```{r error=FALSE, warning=FALSE, include=FALSE}
 library(qwraps2)
 library(formattable)
 library(knitr)
@@ -46,12 +46,19 @@ library(sandwich)
 library(lmtest)
 library(dplyr)
 data_main <- read.dta("~/ECOM5002/Project/data.dta")
+```
 
+```{r, echo=FALSE}
 summary(data_main$firstyear)
 ```
 This has resulted in the inability replicate the results exactly as per the original report. A replication study of this original report was found **_reference_** and used to confirm results outputs in our replication are correct.  
 
 It was also noted that the original data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation.
+```{r, echo = FALSE}
+data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
+data_clean <- subset(data1, left_school==0)
+```
+
 ```{r, echo = FALSE}
 plot(data1$dist_from_cut,data1$probation_year1, xlab = 'Distance from Cutoff', ylab = 'On Probation First year')
 ```
@@ -60,10 +67,7 @@ This data has been left in the analysis as we cannot confirm the accuracy of thi
 
 ### Descriptive Replication  
 The data provided is based on GPA results from three different university campuses, one of which has a different cutoff GPA from the others. To allow for the use of all data based on the same cutoff point the original data includes an output variable of the students GPA distance from the specific campuses GPA cutoff. Using this value the cutoff point is set as 0. The data provided spans a bandwidth of 1.4 GPA points above and below the probation cutoff (0).  
-```{r, echo = FALSE}
-data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]
-data_clean <- subset(data1, left_school==0)
-```
+
 
 Table 1 is the descriptive statistics for the data and replicates Table 1 in the original study. Results are similar to the original report descriptive statistics with male students representing 38% of the sample and 87% of students born in North America.  
 ```{r, echo = FALSE, warning=FALSE}
@@ -100,18 +104,28 @@ In order to use a Linear Regression model the following assumptions have to be m
 2. Variables of the residuals are constant and doesn't depend on I  
 3. The error (residual) of one observation is independent of the error of another  
 4. For statistical inference, the residuals are normally distributed, centred around zero, and have a constant variance.  
-As the assessment we are replicating is the impact of being put on probation to a students next GPA result, this data was assessed to confirm that it meets the above assumptions.
+As the assessment we are replicating is the impact of being put on probation to a students next GPA result, this data was assessed to confirm that it meets the above assumptions.   
 ```{r}
 glm <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean)
 plot(glm)
 ```
+
 The residuals vs fitted values plot shows the data is distributed above and below the line suggesting there is a linear relationship between the x and y values. it is noted that there is a decreasing trend in the data.  
 The scale location plot suggest the residuals of the data do not have constant variance as the width of the data spread appears to increase.  
 The the data below approximately -1 quantile on the Q-Q plot departs from the line therefore it cannot be assumed that the data is normally distributed.  
 There are no significant outliers observed in the Residuals vs Leverage plot.
 
 #### Testing for conditions of RDD  
-The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; the cutoff is 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
+The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; the cutoff is 0) are the treatment group and values above c did not receive the treatment.  
+$$
+Y{i}=\hat{\beta}_0+\hat{\beta}_1X{i}+\hat{\beta}_2W{i}+u_i
+$$
+$$
+
+  Xi = \left\{\begin{array}{l} 1,\ \ \ \ Wi \ge c \\
+    0,\ \ \ \ Wi < c
+  \end{array}\right\}
+$$
 RDD measures the change in the probability at c (the discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
 RDD requires that outputs close to the cutoff are continuous and do not group just above or below the cutoff, and, in the absence of treatment, the student would get the same GPA results. If grouping or a jump occurs at the cutoff, it suggests that the data is biased. In the current study this may occur if the students, knowing the GPA cutoff, manipulated their results to increase their GPA to just above the cutoff.  
 The first year GPA results are used to reduce the likelihood of bias as students are less likely to be aware of the GPA assessment and cutoff values.
