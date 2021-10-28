@@ -24,10 +24,9 @@ The paper selected suggested that when students are placed on academic probation
 
 The descriptive analyses replicated from the study are:  
 - Statistical data of the observational data  
-_- discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold._# if we have time to add it to the code
-
 
 The inferential analyses replicated from the study are:  
+- discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold. 
 - assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
 - if being placed on academic probation impacts the likelihood of the student leaving university the year following probation,    
 - if being placed on probation affects the likelihood of graduating.  
@@ -36,8 +35,15 @@ Figures associated with each of these analysis will also be replicated.
 The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
 
 Moat data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year) it was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
+library(qwraps2)
+library(formattable)
+library(knitr)
 library(foreign)
+library(ggplot2)
+library(sandwich)
+library(lmtest)
+library(dplyr)
 data_main <- read.dta("~/ECOM5002/Project/data.dta")
 summary(data_main$firstyear)
 ```
@@ -56,8 +62,6 @@ data2 <- data_main[data_main$dist_from_cut > -1.2 & data_main$dist_from_cut < 1.
 
 Table 1 is the descriptive statistics for the data and replicates Table 1 in the original study. Results are similar to the original report descriptive statistics with male students representing 38% of the sample and 87% of students born in North America.  
 ```{r, echo = FALSE, warning=FALSE}
-library(qwraps2)
-library(formattable)
 descriptive_summary <- list("Characterisitcs" = list('High School Grade Percentile' =~ qwraps2::mean_sd(hsgrade_pct),
                                                      'Credits Attempted in First Year' =~ qwraps2::mean_sd(totcredits_year1),
                                                      'Age at entry' =~ qwraps2::mean_sd(age_at_entry),
@@ -81,16 +85,38 @@ table1 = summary_table(data1, descriptive_summary)
 ```
 
 ```{r, echo = FALSE, warning=FALSE}
-library(knitr)
 kable(table1, caption = 'Table 1')
 ```
 
+### Inferential Replication
+#### Testing for conditions of RDD  
+The Regression Discontinuity Design (RDD) model uses a continuous variable W (running variable) and assessed B1 close to the cutoff point c to assess for an approximation of the treatment affect. Value of W (in this study; the distance from cutoff) below c (in this study; 0) are the treatment group and values above c did not receive the treatment. _insert equation_  
+RDD measures the change in the probability at c (discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at c.  
+RDD requires that outputs close to the cutoff are continuous and do not group just above or below. If this occurs it suggests that the data is biased. In the current study this would occur if the students, knowing the GPA cutoff, can manipulate their results to increase their GPA to just above the cutoff.  
+Figure 1
 
-#testing for conditions of RDD
-```{r}
-library(sandwich)
-library(lmtest)
-library(dplyr)
+```{r, echo = FALSE, warning=FALSE}
+data2A <- data2 %>% 
+  mutate(freq = 1)
+
+# replace variable freq by quantity in each group of dist_from_cut_round10
+data2A <- data2A%>% 
+  group_by(dist_from_cut_med10) %>% 
+  mutate(freq = length(freq))
+
+```
+
+```{r, echo = FALSE, warning=FALSE}
+data2A %>% 
+  ggplot(aes(x = dist_from_cut_med10, y = freq)) + 
+  geom_point(aes(color=data2A$dist_from_cut>0)) +
+  geom_smooth(method = "glm", formula = y ~ poly(x, 3), se = FALSE)+
+  geom_vline(xintercept = 0) + 
+  labs(y = "Frequency count", x = "GPA distance from cutoff")
+```
+
+
+```{r, echo = FALSE, warning=FALSE}
 val_check = function(x)
 {
   model = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = data1)
