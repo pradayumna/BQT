@@ -22,8 +22,8 @@ data_clean <- subset(data1, left_school==0)
 
 ```{r}
 ##creating subsets 
-hsg_gr_med <- subset(data_clean, hsgrade_pct>50)
-hsg_ls_med <- subset(data_clean, hsgrade_pct<=50)
+hsg_gr_med <- subset(data_clean, hsgrade_pct>=50)
+hsg_ls_med <- subset(data_clean, hsgrade_pct<50)
 male_data <- subset(data_clean, male==1)
 female_data <- subset(data_clean,male==0)
 Eng_data <- subset(data_clean,english==1)
@@ -35,7 +35,7 @@ Data_sets <- list(data_clean,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_dat
 ```{r}
 nextGPA_fn = function(x)
 {
-  model3 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  model3 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+gpasqXgpagrcutoff, data = x)
   a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) 
   c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
 }
