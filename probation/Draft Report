@@ -276,7 +276,7 @@ answer2 = lapply(Data_sets2, FR_fn)
 table5 = do.call(rbind.data.frame, answer2)
 colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
 rownames(table5) <- myvars
-table5
+
 formattable(table5, 
             align =c("c","c","c","c","c", "c"), 
             list(`Indicator Name` = formatter(
