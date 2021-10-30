@@ -97,6 +97,13 @@ table1 = summary_table(data1, descriptive_summary)
 kable(table1, caption = 'Table 1')
 ```
 
+
+Table 1 from original study:
+```{r}
+knitr::include_graphics(rep("~/ECOM5002/Project/Table 1.png"))
+
+```
+
 ### Inferential Replication
 #### Testing for Regression Analysis Assumptions
 In order to use a Linear Regression model the following assumptions have to be met:  
@@ -151,7 +158,7 @@ data1A %>%
 ```
 
 The observable characteristics were also assessed to determine if these variables are also continuous through the threshold. If any of the observations show significant discontinuity it is possible that a student with that characteristic is able to manipulate their grade to avoid being placed on academic probation.
-Table 2 replicates Table 2 in the original report.
+
 ```{r, echo = FALSE, warning=FALSE}
 val_check = function(x)
 {
@@ -172,6 +179,11 @@ formattable(table2,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
+Table 2 above replicates Table 2 in the original report.
+```{r}
+knitr::include_graphics(rep("~/ECOM5002/Project/Table 2.png"))
+```
+
 English as a first language and a birthplace of North America
 are the variables closest to being discontinuous however are not significant at the 5% level.   
 Assessment of the assumption that data is continuous through the threshold (and hence, not biased) is met.  
@@ -179,8 +191,8 @@ Assessment of the assumption that data is continuous through the threshold (and 
 #### RDD Analysis
 ```{r}
 ##creating subsets 
-hsg_gr_med <- subset(data_clean, hsgrade_pct>50)
-hsg_ls_med <- subset(data_clean, hsgrade_pct<=50)
+hsg_gr_med <- subset(data_clean, hsgrade_pct>=50)
+hsg_ls_med <- subset(data_clean, hsgrade_pct<50)
 male_data <- subset(data_clean, male==1)
 female_data <- subset(data_clean,male==0)
 Eng_data <- subset(data_clean,english==1)
@@ -193,7 +205,7 @@ The inferential data replicated is the impact of being placed on academic probat
 ```{r}
 nextGPA_fn = function(x)
 {
-  model3 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  model3 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+gpasqXgpagrcutoff, data = x)
   a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) 
   c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
 }
@@ -209,13 +221,22 @@ formattable(table4,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-Results of the above table show   
+Results of the above table are compared to the first section of Table 6 _(No adjustment for students not returning)_, and Table 7 in the original report.
+```{r}
+knitr::include_graphics(rep("~/ECOM5002/Project/Table 6.png"))
+knitr::include_graphics(rep("~/ECOM5002/Project/Table 7.png"))
+```
+   
 
 #### Critical Assessment
 In replicating this data a number of issues were identified:
-- There is no confirmed assessment of linear regression assumptions, only RDD assumptions have been addressed.  
-- Data provided for replication is not the same as the data used in the report  
+- There is no confirmed assessment of linear regression assumptions in the original report, only RDD assumptions have been addressed.  
+- Data provided for replication is not the same as the data used in the report.  
 - details of how the data has been cleaned and adapted to run the regression models has not been included or discussed.  
+Because of these inconsistencies in the original report the data cannot be replicated exactly. Results were replicated using the polynomial linear regression equation stated in foot note 11 of the original report:
+```{r}
+knitr::include_graphics(rep("~/ECOM5002/Project/equation.png"))
+```
 
 _A replication study of this original report was found **_reference_**. Appendix 1 shows some of the replication of this report which does not use a quadratic term. Results of this report can be replicated exactly._
 
