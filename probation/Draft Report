@@ -283,6 +283,9 @@ formattable(table5,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
+All results show an increase in subsequent GPA results of 0.2 to 0.3 grade points at a minimum 10% significance.
+
+
 ___________________________________________________________________________________
 
 
