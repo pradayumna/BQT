@@ -221,7 +221,8 @@ formattable(table4,
               "span", style = ~ style(color = "grey",font.weight = "bold")),
               `P-Value (1)`= color_tile('pink', 'lightgreen')))
 ```
-Results of the above table are compared to the first section of Table 6 _(No adjustment for students not returning)_, and Table 7 in the original report.
+Results of the above table are compared to the first column of the first section of Table 6 _(1.4 bandwidth, Control variable = no, No adjustment for students not returning)_, and Table 7 in the original report. Although results are not replicated exactly it still has an improvement if the students subsequent GPA by 0.26 grade points (vs 0.19 grade points in the original report).   
+The subsequent GPAs for the different subgroups also showed and increase in the GPA as per the orgiginal report.  
 ```{r}
 knitr::include_graphics(rep("~/ECOM5002/Project/Table 6.png"))
 knitr::include_graphics(rep("~/ECOM5002/Project/Table 7.png"))
