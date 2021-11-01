@@ -5,6 +5,7 @@ output:
   pdf_document: default
   html_document:
     df_print: paged
+  word_document: default
 ---
 
   
@@ -57,7 +58,7 @@ Summary  <-   list("First Year Data Range" =
        list("min"       = ~ min(firstyear),
             "max"       = ~ max(firstyear)))
 Table1 <- summary_table(data_main, Summary)
-kable(Table1, caption = 'Table 1')
+kable(Table1, caption = 'First Year Range')
 ```
 This has resulted in the inability replicate the results exactly as per the original report.   
 
@@ -98,11 +99,11 @@ descriptive_summary <- list("Characterisitcs" = list('High School Grade Percenti
                                               'Graduated by Year 5' =~ qwraps2::mean_sd(gradin5, na_rm = TRUE, show_n = 'never'),
                                               'Graduated by Year 6' =~ qwraps2::mean_sd(gradin6, na_rm = TRUE, show_n = 'never')))
 options(qwraps2_markup = "markdown")
-table2 = summary_table(data1, descriptive_summary)
+Table2 = summary_table(data1, descriptive_summary)
 ```
 
 ```{r, echo = FALSE, warning=FALSE}
-kable(table2, caption = 'Table 2')
+kable(Table2, caption = 'Descriptive Summary')
 ```
 
 
@@ -180,14 +181,10 @@ myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english',
 chardata <- data_clean[myvars]
 #colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
 answer = lapply(chardata, val_check)
-table3 = do.call(rbind.data.frame, answer)
-colnames(table3) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table3) <- myvars
-formattable(table3, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+Table3 = do.call(rbind.data.frame, answer)
+colnames(Table3) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(Table3) <- myvars
+kable(Table3, caption = 'Observable Characteristics Estimated Discontinuity')
 ```
 Table 3 above replicates Table 2 in the original report.  
 ```{r}
@@ -226,14 +223,11 @@ nextGPA_fn = function(x)
 myvars2 = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
 colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
 answer = lapply(Data_sets, nextGPA_fn)
-table4 = do.call(rbind.data.frame, answer)
-colnames(table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table4) <- myvars2
-formattable(table4, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+Table4 = do.call(rbind.data.frame, answer)
+colnames(Table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(Table4) <- myvars2
+
+kable(Table4, caption = 'Next GPA Assessment')
 ```
 Results of the above table are compared to the first column of the first section of Table 6 (1.4 bandwidth, Control variable = no, No adjustment for students not returning), and Table 7 in the original report. Although results are not replicated exactly it still shows the probability of an improvement of the students subsequent GPA, calculated at 0.26 grade points (vs 0.19 grade points in the original report). All results are significant at the 1% level (p-values are less than 0.01).   
 The subsequent GPAs for the different subgroups also showed and increase in the subsequent GPA as per the original report. Comparison of the groups shows the probability of improving the students subsequent GPA is greater in females than males, greater in students with high schools grades below the median than those above, and similar for those with English as their first language or not. It is noted that there is a difference in the native language results between the original report and this replication as the original report shows a greater difference in the increase in GPA between these two groups:  
@@ -274,11 +268,6 @@ BP_other <- subset(data_clean,bpl_north_america==0)
 
 
 Data_sets2 <- list(data_clean,Age_17,Age_18,Age_19,Age_20,Age_21, BP_NA,BP_other)
-
-Sl_lv <- subset(data_clean, age_at_entry<=19)
-mat_age <- subset(data_clean, age_at_entry>19)
-
-Data_sets3 <- list(data_clean,Sl_lv, mat_age)
 ```
 
 ```{r}
@@ -291,21 +280,16 @@ FR_fn = function(x)
 myvars = c('All Data', 'Age entry = 17','Age entry = 18','Age entry = 19','Age entry = 20','Age entry = 21', 'Birth place Nth America', 'Birth place Other')
 colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
 answer2 = lapply(Data_sets2, FR_fn)
-table5 = do.call(rbind.data.frame, answer2)
-colnames(table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
-rownames(table5) <- myvars
+Table5 = do.call(rbind.data.frame, answer2)
+colnames(Table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(Table5) <- myvars
 
-formattable(table5, 
-            align =c("c","c","c","c","c", "c"), 
-            list(`Indicator Name` = formatter(
-              "span", style = ~ style(color = "grey",font.weight = "bold")),
-              `P-Value (1)`= color_tile('pink', 'lightgreen')))
+kable(Table5, caption = 'Free Roam Next GPA Assessment')
 ```
-All results show an increase in subsequent GPA results of 0.2 to 0.3 grade points at a minimum 10% significance. This is in agreement with the original paper that being put on probation increases the students probability of increasing their subsequent GPA (of those students that remain at university ).
+All results show an increase in subsequent GPA results of 0.2 to 0.3 grade points at a minimum 10% significance. This is in agreement with the original paper that being put on probation increases the students probability of increasing their subsequent GPA (of those students that remain at university).
 
 
 ###References
-
 ___________________________________________________________________________________
 
 
