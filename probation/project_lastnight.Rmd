@@ -1,0 +1,418 @@
+---
+title: "Business Quantitative Techniques Project"
+author: "Pradyumna Agrawal and Louise Higson"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+  
+# Replication of Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation."   
+American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+## Overview  
+Universities, to ensure all students meet a minimum academic standard, implement a minimum Grade Point Average (GPA) that, if not met, results in the student being placed on academic probation. The student must then increase their subsequent year and average GPA to meet this minimum, otherwise risk academic suspension.  
+The above paper uses data of students academic standing over the period of their studies to assess the effect of placing students who fail to meet a minimum academic standard on probation.  
+
+The data includes a number of student characteristics (e.g. age, sex, high school grades, first language, birthplace) which are assessed to determine if any particular characteristic shows an increase in probability of a decision to leave or continue studying.   
+
+The regression discontinuity model is used to perform the analysis as it can assess if there is a significant difference in the outcomes between the treatment group (those placed on academic suspension) and the control group (those not placed on academic suspension).  
+
+The paper selected suggested that when students are placed on academic probation it can result in students not returning to university in the following year, and for those students who do return, an increase in their performance. When the observable characteristics are assessed individually the results are consistent in that it also shows the probability of an increase in performance.  
+  
+The descriptive analyses replicated from the study are:  
+- Statistical data of the observational data  
+
+The inferential analyses replicated from the study are:  
+- discontinuity of the frequency of students on probation in the first year. This analysis can identify if there is any grouping of data suggesting a non random sorting across the threshold.  
+- assessment of the student characteristics to check for discontinuity between the treatment and control group. A discontinuity between these two groups suggests a particular characteristic may influence a students grade.  
+- how being placed on academic probation impacts the subsequent years GPA (increase, decrease or no effect).  
+_A number of figures associated with each of these analysis will also be replicated._  
+The original report does not contain an assessment of linear regression assumption therefore these have been included with the assessment of discontinuity assumptions.  
+
+The free roam section of this report looks at some of the characteristics not assessed as part of the original report to determine if if there is a difference in response to probation based on these characteristics, and if these characteristics further support or contradict the study findings.  
+  
+Most data cleaning had been performed by the original authors (removing students with missing data and those who did not have the academic standard assessed at the end of the first year). It was noted that there are discrepancies in the data range reported in the original study and the data available for review and replication. The report states academic standing data was collected in the years 1995 to 2004 however review of the reported first year confirmed the range of data supplied is 1996 to 2003.
+```{r error=FALSE, warning=FALSE, include=FALSE}
+list.of.packages <- c("qwraps2", "formattable", "knitr", "foreign", "ggplot2", 'sandwich', 'lmtest', 'dplyr', 'tinytex') #We need these packages to run the code
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])] #Check if there is any package that is not present on the system. 
+if(length(new.packages)) install.packages(new.packages) #if any package is not present, install it first
+lapply(list.of.packages, require, character.only = TRUE) #load all packages
+
+data_main <- read.dta("data.dta") #read the data in .dta file using package foreign
+```
+
+```{r year range validation,echo=FALSE}
+Summary  <-   list("First Year Data Range" =
+       list("min"       = ~ min(firstyear),
+            "max"       = ~ max(firstyear))) #Create a list that contains information about first and last year for which we have data
+Table1 <- summary_table(data_main, Summary) #convert the list into a table
+kable(Table1, caption = 'First Year Range') #knit the table
+```
+This has resulted in the inability replicate the results exactly as per the original report.   
+
+It was also noted that the original data had several points where students who did not meet the minimum GPA were not recorded as being placed on academic probation.
+```{r, echo = FALSE}
+data1 <- data_main[data_main$dist_from_cut > -1.4 & data_main$dist_from_cut < 1.4, ]# create threshold as per original report.
+data_clean <- subset(data1, left_school==0)# to reduce bias for subsequent GPA analysis.
+```
+
+```{r, echo = FALSE}
+ggplot(data1, aes(dist_from_cut, probation_year1))+ geom_point()+geom_vline(xintercept = 0, col = "green")+ggtitle("Figure 1: Distribution of Data Around the Cutoff")+xlab("GPA Distance from Cutoff") + ylab("On Probation First year")
+#create a scatter plot between distance from cutoff and probation year. Add a line, title, x-label and y-label to the plot
+```
+
+This data has been left in the analysis as we cannot confirm the accuracy of this data and therefore do not have sufficient justification to remove it.  
+
+## Descriptive Replication  
+The data provided is based on GPA results from three different university campuses, one of which has a different cutoff GPA from the others. To allow for the use of all data based on the same cutoff point the original data includes an output variable of the students GPA distance from the specific campuses GPA cutoff. Using this value the cutoff point is set as 0. The data provided spans a bandwidth of 1.4 GPA points above and below the probation cutoff (0).  
+
+
+Table 2 is the descriptive statistics for the data and replicates Table 1 in the original study^1^. Results are similar to the original report descriptive statistics with male students representing 38% of the sample and 87% of students born in North America.  
+```{r descriptive analysis, echo = FALSE, warning=FALSE}
+#this chunk uses qwraps2 library. The library allows creating a list with variable definitions. This list is then used to create a table with a dataset. The variable definitions take values for variables from the dataset that is sent as the second argument. 
+
+#define the list. 
+descriptive_summary <- list("Characterisitcs" = list('High School Grade Percentile' =~ qwraps2::mean_sd(hsgrade_pct),
+                                                     'Credits Attempted in First Year' =~ qwraps2::mean_sd(totcredits_year1),
+                                                     'Age at entry' =~ qwraps2::mean_sd(age_at_entry),
+                                                     'male' =~ qwraps2::mean_sd(male),
+                                                     'English is First Language' =~ qwraps2::mean_sd(english),
+                                                     'Born in North America' =~ qwraps2::mean_sd(bpl_north_america),
+                                                     'At Campus 1' =~ qwraps2::mean_sd(loc_campus1),
+                                                     'At Campus 2' =~ qwraps2::mean_sd(loc_campus2),
+                                                     'At Campus 3' =~ qwraps2::mean_sd(loc_campus3)), 
+                            "Outcomes" = list('Distance from Cutoff in 1st Year' =~ qwraps2::mean_sd(dist_from_cut),
+                                              'On Probation After 1st Year' =~ qwraps2::mean_sd(probation_year1),
+                                              'Ever on Academic Probation' =~ qwraps2::mean_sd(probation_ever),
+                                              'Left University after 1st Evaluation' =~ qwraps2::mean_sd(left_school),
+                                              'Distance from Cutoff Next Evaluation' =~ qwraps2::mean_sd(nextGPA, na_rm = TRUE, show_n = 'never'),
+                                              'Ever Suspended' =~ qwraps2::mean_sd(suspended_ever, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 4' =~ qwraps2::mean_sd(gradin4, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 5' =~ qwraps2::mean_sd(gradin5, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 6' =~ qwraps2::mean_sd(gradin6, na_rm = TRUE, show_n = 'never')))
+options(qwraps2_markup = "markdown") #set markdown option. 
+Table2 = summary_table(data1, descriptive_summary) #create table.
+kable(Table2, caption = 'Descriptive Summary') #knit the table
+```
+
+
+\newpage
+Lindo et al Table 1 from original study^1^:  
+```{r}
+if(file.exists("Table 1.png")) knitr::include_graphics(rep("Table 1.png")) 
+
+#First check if the file is in the folder. 
+#If yes, then add the sanp of the descritptive table from the original paper. The same is already saved in the folder as Table 1.png
+
+```
+
+## Inferential Replication
+### Testing for Regression Analysis Assumptions
+In order to use a Linear Regression model the following assumptions have to be met:  
+1. There is a linear relationship between the X and Y.  
+2. The variance of the residuals are constant for all values of X.  
+3. The error (residuals) of one observation is independent of the error of another.  
+4. For statistical inference, the residuals are normally distributed.  
+As the assessment we are replicating uses a linear regression model to assess the impact of being put on probation to a students next GPA result, this data was assessed to confirm that it meets the above assumptions.   
+```{r}
+glm <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean)
+#create a regression model with GPA of next year (nextGPA) as dependent variable. Use 4 variables as used by original authors as explanatory variables. These variables are, gpalscutoff (indicator variable that indicates if treatment was administered, gpaXgpalscutoff + gpaXgpagrcutoff shows interation of indicator variables with gpa)
+plot(glm) #plot diagnostic plots
+```
+
+The residuals vs fitted values plot shows the data is distributed above and below the line however is noted that there is a decreasing trend in the data where more points are below the line as the X variable increases.  
+The scale location plot suggest the residuals of the data do not have constant variance as the width of the data spread appears to increase as X increases.  
+The the data below approximately -1 quantile on the Q-Q plot departs from the line therefore it cannot be assumed that the data is normally distributed.  
+There are no significant outliers observed in the Residuals vs Leverage plot.
+
+The above test of assumptions suggests the data does not fit well to a normal distribution and there is unequal variance in the residuals. There may be a more suitable model to use for this data or further transformations to improve the adherence to the required assumptions, however, the data will be used as is to perform the study replication.
+
+### Testing for conditions of RDD  
+The Regression Discontinuity Design (RDD) model uses a continuous variable $W$ (running variable) and assesses $\beta_1$ close to the cutoff point $c$ to assess for an approximation of the treatment affect. Value of $W$ (in this study; the distance from cutoff) below $c$ (in this study; the cutoff is 0) are the treatment group and values above $c$ did not receive the treatment^2^.  
+$$
+Y{i}=\hat{\beta}_0+\hat{\beta}_1X{i}+\hat{\beta}_2W{i}+u_i
+$$
+$$
+Xi = \left\{\begin{array}{l} 1,\ \ \ \ Wi \ge c \\
+0,\ \ \ \ Wi < c
+\end{array}\right\}
+$$
+RDD measures the change in the probability at $c$ (the discontinuity) and is used to estimate the effect of the treatment based on the size of the discontinuity at $c$.  
+RDD requires that outputs close to the cutoff are continuous and do not group just above or below the cutoff, and, in the absence of treatment, the student would get the same GPA result. If grouping or a jump occurs at the cutoff, it suggests that the data is biased. In the current study this may occur if the students, knowing the GPA cutoff, manipulated their results to increase their GPA to just above the cutoff.  
+The first year GPA results were chosen by the original report authors to reduce the likelihood of bias, as students are less likely to be aware of the GPA assessment and cutoff values in their first year of university.
+As we do not have a sample of students who were not put on academic probation when below the cutoff to compare with, the frequency of the GPA results is used to assess if there is an observed jump at the cutoff. Figure 2 shows the regression of the frequency of the distance from cutoff values. The data is continuous through the cutoff point therefore there is no evidence of bias around the cutoff.   
+  
+```{r, echo = FALSE, warning=FALSE}
+data1A <- data1 %>% 
+  mutate(freq = 1)  #add a column named frequency and set its value to 1 for all rows initially
+
+# replace variable freq by quantity in each group of dist_from_cut_round10
+data1A <- data1A%>% 
+  group_by(dist_from_cut_med10) %>% 
+  mutate(freq = length(freq)) #group data by distance from cutoff and change frequency as the number of elements in a group
+
+```
+
+```{r, echo = FALSE, warning=FALSE}
+data1A %>% 
+  ggplot(aes(x = dist_from_cut_med10, y = freq)) + 
+  geom_point(aes(color=data1A$dist_from_cut<0)) +
+  geom_smooth(method = "glm", formula = y ~ poly(x, 2), se = FALSE, data = data1A[data1A$dist_from_cut_med10 > 0, ])+
+  geom_smooth(method = "glm", formula = y ~ poly(x, 2), se = FALSE, data = data1A[data1A$dist_from_cut_med10 < 0, ])+
+  geom_vline(xintercept = 0) + 
+  labs(y = "Frequency count", x = "GPA Distance from Cutoff", ggtitle("Figure 2: Distribution of Student GPAs"))
+```
+\newpage
+Figure 2 replicates Figure 1 in the original report^1^.  
+```{r}
+#knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/Frequency plot.png"))
+```
+
+The observable characteristics were also assessed to determine if these variables are also continuous through the threshold. If any of the observations show significant discontinuity it is possible that a student with that characteristic is able to manipulate their grade to avoid being placed on academic probation.
+
+```{r, echo = FALSE, warning=FALSE}
+val_check = function(x)
+{
+  model = lm(x ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean)
+  a = coeftest(model, vcov = vcovCL, cluster = data_clean$clustervar)
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars = c('hsgrade_pct', 'totcredits_year1', 'age_at_entry', 'male', 'english','bpl_north_america','loc_campus1', 'loc_campus2', 'loc_campus3')
+chardata <- data_clean[myvars]
+#colnames(abc) = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(chardata, val_check)
+Table3 = do.call(rbind.data.frame, answer)
+colnames(Table3) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(Table3) <- myvars
+kable(Table3, caption = 'Observable Characteristics Estimated Discontinuity')
+```
+\newpage
+Table 3 above replicates Lindo et al Table 2 in the original report^1^.  
+```{r}
+#knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/Table 2.png"))
+```
+
+All results are not significant at the 10% level (all p-values are greater than 0.1) therefore there is no evidence of discontinuity at the cutoff for any of the observable characteristics.   
+Assessment of the assumption that data is continuous through the threshold (and hence, not biased) is met.  
+
+### Regression Discontinuity Design Analysis
+#### Impact of Academic Probation on the next GPA result  
+The inferential data replicated is the impact of being placed on academic probation on the students subsequent GPA (of students who remain at university).  
+\newpage
+Results were replicated using the polynomial linear regression equation stated in foot note 11 of the Lindo et al original report^1^:  
+```{r}
+#knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/equation.png"))
+```
+It is noted that in the original report the assessment of impact on the subsequent GPA may be biased due to the loss of students (not returning to university in the second year) after the first year. The absence of second year results for these student can result in an increase in the probability of an improved GPA, as a number of students who would have a GPA below the cutoff in the second year if they had remained at university, are not longer included in the sample. Therefore students who have left school after the first year are removed from the dataset to reduce this bias.  
+```{r, echo = FALSE, include=FALSE}
+median(data_main$hsgrade_pct)#determine median of high school grade, assessed using all data, to split data
+```
+
+```{r}
+##creating subsets 
+hsg_gr_med <- subset(data_clean, hsgrade_pct>=50)
+hsg_ls_med <- subset(data_clean, hsgrade_pct<50)
+male_data <- subset(data_clean, male==1)
+female_data <- subset(data_clean,male==0)
+Eng_data <- subset(data_clean,english==1)
+noeng_data <- subset(data_clean,noenglish==1)
+Data_sets <- list(data_clean,hsg_gr_med,hsg_ls_med,male_data,female_data,Eng_data, noeng_data)
+```
+
+```{r}
+nextGPA_fn = function(x)
+{
+  model3 = lm(formula = nextGPA ~ gpalscutoff*dist_from_cut, data = x)
+  a = coeftest(model3, vcov = vcovCL, cluster = x$clustervar) 
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars2 = c('All Data', 'HSgrade above Median','HSgrade below Median','Male','Female','Eng 1st language', 'Eng not 1st language')
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer = lapply(Data_sets, nextGPA_fn)
+Table4 = do.call(rbind.data.frame, answer)
+colnames(Table4) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(Table4) <- myvars2
+
+kable(Table4, caption = 'Next GPA Assessment')
+```
+Results of the above table are compared to the first column of the first section of Table 6 (1.4 bandwidth, Control variable = no, No adjustment for students not returning), and Table 7 in the original report. Although results are not replicated exactly it still shows the probability of an improvement of the students subsequent GPA, calculated at 0.26 grade points (vs 0.19 grade points in the original report). All results are significant at the 1% level (p-values are less than 0.01).   
+\newpage
+Lindo et al Table 6 and 7 ^1^  
+```{r}
+#knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/Table 6.png"))
+```
+
+```{r}
+#knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/Table 7.png"))
+```
+The subsequent GPAs for the different subgroups also showed and increase in the subsequent GPA as per the original report. Comparison of the groups shows the probability of improving the students subsequent GPA is greater in females than males, greater in students with high schools grades below the median than those above, and similar for those with English as their first language or not. It is noted that there is a difference in the native language results between the original report and this replication as the original report shows a greater difference in the increase in GPA between these two groups:  
+Original report difference in increase in GPA = 0.039 points  
+Replicated difference in increase in GPA = 0.005 points  
+
+## Critical Assessment
+In replicating this report a number of issues and inconsistencies were encountered:
+- Data provided for replication is not the same as the data used in the report. The number of input variable using bandwidth of $\pm$ 1.4 in the report is 32,697 whereas the number of input variable in the provided data when the bandwidth is $\pm$ 1.4 is 29,601. This was a results of the data provided having missing result for the years 1995 and 2004. The replication 'Replication of Lindo, Sanders & Oreopoulos (2010), Student Project'^3^ confirmed the dataset used in out assessment is correct as the validation check of observable characteristics performed in this report, when the data is limited to a bandwidth of $\pm$ 0.6, matches table 1 and the Extension table of the replicated report exactly.    
+```{r}
+data2 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]# create threshold as per replication report.
+```
+
+
+```{r, echo = FALSE, warning=FALSE, include=FALSE}
+descriptive_summary <- list("Characterisitcs" = list('High School Grade Percentile' =~ qwraps2::mean_sd(hsgrade_pct),
+                                                     'Credits Attempted in First Year' =~ qwraps2::mean_sd(totcredits_year1),
+                                                     'Age at entry' =~ qwraps2::mean_sd(age_at_entry),
+                                                     'male' =~ qwraps2::mean_sd(male),
+                                                     'English is First Language' =~ qwraps2::mean_sd(english),
+                                                     'Born in North America' =~ qwraps2::mean_sd(bpl_north_america),
+                                                     'At Campus 1' =~ qwraps2::mean_sd(loc_campus1),
+                                                     'At Campus 2' =~ qwraps2::mean_sd(loc_campus2),
+                                                     'At Campus 3' =~ qwraps2::mean_sd(loc_campus3)), 
+                            "Outcomes" = list('Distance from Cutoff in 1st Year' =~ qwraps2::mean_sd(dist_from_cut),
+                                              'On Probation After 1st Year' =~ qwraps2::mean_sd(probation_year1),
+                                              'Ever on Academic Probation' =~ qwraps2::mean_sd(probation_ever),
+                                              'Left University after 1st Evaluation' =~ qwraps2::mean_sd(left_school),
+                                              'Distance from Cutoff Next Evaluation' =~ qwraps2::mean_sd(nextGPA, na_rm = TRUE, show_n = 'never'),
+                                              'Ever Suspended' =~ qwraps2::mean_sd(suspended_ever, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 4' =~ qwraps2::mean_sd(gradin4, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 5' =~ qwraps2::mean_sd(gradin5, na_rm = TRUE, show_n = 'never'),
+                                              'Graduated by Year 6' =~ qwraps2::mean_sd(gradin6, na_rm = TRUE, show_n = 'never')))
+options(qwraps2_markup = "markdown")
+Table6 = summary_table(data2, descriptive_summary)
+```
+
+```{r, echo = FALSE, warning=FALSE, include=FALSE}
+kable(Table6, caption = 'Descriptive Summary')
+```
+
+
+- There is no confirmed assessment of linear regression assumptions in the original report, only RDD assumptions have been addressed. Our assessment of assumptions of linear regression suggests the data is not normally distributed and there is inconsistent variance in residuals with a pattern observed in both the Residuals vs Fitted plot and the Scale-Location plot. Therefore a linear regression may not be the best model for analysing this data.  
+Because of these inconsistencies in the original report the data could not be replicated exactly.  
+
+The bandwidth was reduced to $\pm$ 0.6 and $\pm$ 0.3 to test if this improved the fit to a linear regression model:  
+```{r, echo = FALSE}
+#data2 created above
+data_clean2 <- subset(data2, left_school==0)# to reduce bias for subsequent GPA analysis.
+
+data3 <- data_main[data_main$dist_from_cut > -0.3 & data_main$dist_from_cut < 0.3, ]# create threshold as per original report.
+data_clean3 <- subset(data3, left_school==0)# to reduce bias for subsequent GPA analysis.
+```
+
+```{r}
+glm2 <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean2)
+plot(glm2)
+```
+
+```{r}
+glm3 <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean3)
+plot(glm3)
+```
+This improves the consistency of the residuals variance however does not improve the fit to a normal distribution. Further transformations of the output variable 'nextGPA' are required to improve the fit of the data.  
+
+
+The replication of the next GPA results were chosen as this data is continuous output data which fits the requirements of a linear model. Other outputs assessed in the original report are the effect of probation on the decision to leave university, the effect of ever being suspended, and the effect on graduation. All of these outputs are binary therefore the authors have transformed these outputs to probabilities to create continuous data suitable for use in a linear regression model. Further research performed has found that a binary model can be used for regression discontinuity which may be more suitable for these output types (section 3 of A Practical Introduction to Regression Discontinuity Designs: Volume II^4^).    
+
+
+The discussion section of the original report states that there is an unexpected response to academic probation in that it was expected that students with a lower ability (assessed using the observable characteristic of high school percentage) were expected to not show an increase in their subsequent GPA score or be more likely to drop out. However the students with a high school grade below the median showed a greater increase in their subsequent GPA than those above the median. In the original report this variation in the expected outcome has been proposed as occurring because the impact to the self confidence of the students with high schools grades above the median is greater than those students who are below the median. The example given in the study is that the higher ability student (based on high school grades) expects to do well in their first year. When placed on academic probation the students self confidence is reduced enough to prevent them performing well in subsequent years or ultimately drop out. Whereas the student who performed below the median in high school is expecting the experience to be difficult and is not impacted as much in future grades. The authors assume that the decision to return to school is a measure of self confidence and assesses the impact of probation on the measured student ability (high school grade) and self confidence (the decision to return to university). This is a limited view point with an alternative provided here:  
+The authors do not consider other observable characteristics in the above assessment. The replication of data in Table 4 also shows that both female students and students where English is a second language also show a greater increase in their GPA following academic probation when compared to the alternative subgroup (males and English as a first language). Considering both these other subgroups it could be proposed that students who performed below the median in high school, are female and have English as a second language have 'more to lose' based on societal pressures if they drop out or do not improve their subsequent GPA scores. This can be further assessed if additional data looking at socioeconomic status, name of the high school attended or address of childhood residence. This data could then be used to determine if there is also a correlation between increasing subsequent GPA scores.
+
+
+## Free Roam
+Data for the observable attributes of age and birthplace were not assessed as part of the original report. The free roam section of the report below assessed the impact of academic probation in the first year on the subsequent GPA based on the age of the student (when starting university) and the student birthplace (limited to North America or other).  
+```{r}
+Age_17 <- subset(data_clean, age_at_entry==17)
+Age_18 <- subset(data_clean, age_at_entry==18)
+Age_19 <- subset(data_clean, age_at_entry==19)
+Age_20 <- subset(data_clean, age_at_entry==20)
+Age_21 <- subset(data_clean, age_at_entry==21)
+
+BP_NA <- subset(data_clean,bpl_north_america==1)
+BP_other <- subset(data_clean,bpl_north_america==0)
+
+
+Data_sets2 <- list(data_clean,Age_17,Age_18,Age_19,Age_20,Age_21, BP_NA,BP_other)
+```
+
+```{r}
+FR_fn = function(x)
+{
+  model6 = lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff, data = x)
+  a = coeftest(model6, vcov = vcovCL, cluster = x$clustervar) 
+  c(a[2,1], a[2, 4], a[2, 2], a[1, 1], a[1, 4], a[1, 2])
+}
+myvars = c('All Data', 'Age entry = 17','Age entry = 18','Age entry = 19','Age entry = 20','Age entry = 21', 'Birth place Nth America', 'Birth place Other')
+colnames = c('gpa below cutoff 1', 'p-value 1', 'sd-error 1', 'intercept 0', 'p value 0', 'sd-error 1')
+answer2 = lapply(Data_sets2, FR_fn)
+Table5 = do.call(rbind.data.frame, answer2)
+colnames(Table5) <- c('GPA below cutoff (1)', 'P-Value (1)', 'Std.err (1)','Intercept (0)', 'P-Value (0)', 'Std.err (0)')
+rownames(Table5) <- myvars
+
+kable(Table5, caption = 'Free Roam Next GPA Assessment')
+```
+All results show an increase in subsequent GPA results of 0.2 to 0.3 grade points at a minimum 10% significance. This is in agreement with the original paper that being put on probation increases the students probability of increasing their subsequent GPA (of those students that remain at university).The greatest increase is seen for those students who entered university at age 17 and 21 which are the upper and lower age limits of the data.
+
+\newpage
+### References
+1. Replication of Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation."   
+American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95  
+
+2. Introduction to Econometrics with R
+Christoph Hanck, Martin Arnold, Alexander Gerber, and Martin Schmelzer.
+Chair of Econometrics
+Department of Business Administration and Economics
+University of Duisburg-Essen
+Essen, Germany
+Last updated on Wednesday, October 06, 2021
+
+3. Replication of Lindo, Sanders & Oreopoulos (2010), Student Project.  
+https://github.com/amageh/replication-performance-standards/blob/master/replication-notebook.ipynb  
+last updated 19 Apr 2020  
+
+4. A Practical Introduction to Regression Discontinuity Designs: Volume II
+Matias D. Cattaneo, Nicol´as Idrobo, Roc´ıo Titiunik
+June 14, 2018
+Quantitative and Computational Methods for Social Science
+Cambridge University Press
+
+___________________________________________________________________________________
+
+
+
+
+
+Study: 
+Lindo, Jason M., Nicholas J. Sanders, and Philip Oreopoulos. 2010. "Ability, Gender, and Performance Standards: Evidence from Academic Probation." American Economic Journal: Applied Economics, 2 (2): 95-117.DOI: 10.1257/app.2.2.95 
+
+Section os the report:
+OVERVIEW
+overview of paper including main outcomes. 
+overivew of replicated elements
+
+DESCRIPTIVE REPLICATION
+correctly sourced image of the publised results
+
+INFERENTIAL REPLICATION
+correctly sourced image of the original
+replication process and issues encountered during replication
+
+FIGURE REPLICATION
+correctly sourced image of the original
+replication process and issues encountered during replication
+
+CRITICAL ASSESSMENT
+critque of replicated analysis
+include assumptions(with test fo assumptions where required), process and pitfalls
+
+FREE ROAM
+Rational for free roam choice and discussion of implications
+
+
+CODE
+Ensure it is commented and runs with no errors

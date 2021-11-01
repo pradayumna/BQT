@@ -25,3 +25,11 @@ Date - 23rd Sept 2021
 6. There are two checks that need to be made. 1) the data is distributed evenly on the both side of cut-off. 2) characteristic variables are continuous. 
 
 7. Today, I am doing check on continuity of characteristics variable. 
+
+
+How to Create Graphs - 
+
+1- Calculate predictions First
+2- group by using dist_from_cut_med10
+3- plot points 
+4 - 
