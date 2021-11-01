@@ -248,6 +248,27 @@ In replicating this report a number of issues and inconsistencies were encounter
 - There is no confirmed assessment of linear regression assumptions in the original report, only RDD assumptions have been addressed. Our assessment of assumptions of linear regression suggests the data is not normally distributed and there is inconsistent variance in residuals with a pattern observed in both the Residuals vs Fitted plot and the Scale-Location plot. Therefore a linear regression may not be the best model for analysing this data.  
 Because of these inconsistencies in the original report the data could not be replicated exactly.  
 
+The bandwidth was reduced to $\pm$ 0.6 and $\pm$ 0.3 to test if this improved the fit to a linear regression model:  
+```{r, echo = FALSE}
+data2 <- data_main[data_main$dist_from_cut > -0.6 & data_main$dist_from_cut < 0.6, ]# create threshold as per original report.
+data_clean2 <- subset(data2, left_school==0)# to reduce bias for subsequent GPA analysis.
+
+data3 <- data_main[data_main$dist_from_cut > -0.3 & data_main$dist_from_cut < 0.3, ]# create threshold as per original report.
+data_clean3 <- subset(data3, left_school==0)# to reduce bias for subsequent GPA analysis.
+```
+
+```{r}
+glm2 <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean2)
+plot(glm2)
+```
+
+```{r}
+glm3 <- lm(nextGPA ~ gpalscutoff + gpaXgpalscutoff + gpaXgpagrcutoff+ gpasqXgpagrcutoff, data = data_clean3)
+plot(glm3)
+```
+This improves the consistency of the residuals variance however does not improve the fit to a normal distribution.
+
+
 The replication of the next GPA results were chosen as this data is continuous output data which fits the requirements of a linear model. Other outputs assessed in the original report are the effect of probation on the decision to leave university, the effect of ever being suspended, and the effect on graduation. All of these outputs are binary therefore the authors have transformed these outputs to probabilities to create continuous data suitable for use in a linear regression model. Further research performed has found that a binary model can be used for regression discontinuity which may be more suitable for these  output types _https://github.com/honn-ishinn/RDD_academic_probation/blob/main/outputs/paper/paper.pdf_.  
 
 
