@@ -202,6 +202,10 @@ Results were replicated using the polynomial linear regression equation stated i
 knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/equation.png"))
 ```
 It is noted that in the original report the assessment of impact on the subsequent GPA may be biased due to the loss of students (dropping out) after the first year. The absence of second year results for these student can result in an increase in the probability of an improved GPA, as a number of students who would have a GPA below the cutoff in the second year if they had remained at university, are not longer included in the sample. Therefore students who have left school after the first year are removed from the dataset to reduce this bias.  
+
+```{r, echo = FALSE, include=FALSE}
+median(data_main$hsgrade_pct)#determine median of highschool grade to split data
+```
 ```{r}
 ##creating subsets 
 hsg_gr_med <- subset(data_clean, hsgrade_pct>=50)
