@@ -50,6 +50,7 @@ library(sandwich)
 library(lmtest)
 library(dplyr)
 library(tinytex)
+library(gridExtra)
 data_main <- read.dta("~/ECOM5002/Project/data.dta")
 ```
 
@@ -254,6 +255,39 @@ knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/
 The subsequent GPAs for the different subgroups also showed and increase in the subsequent GPA as per the original report. Comparison of the groups shows the probability of improving the students subsequent GPA is greater in females than males, greater in students with high schools grades below the median than those above, and similar for those with English as their first language or not. It is noted that there is a difference in the native language results between the original report and this replication as the original report shows a greater difference in the increase in GPA between these two groups:  
 Original report difference in increase in GPA = 0.039 points  
 Replicated difference in increase in GPA = 0.005 points  
+
+```{r}
+rdd_plot = function(dataset, name)
+{ 
+  data1 <- dataset
+  data_temp <- data1 %>% 
+  mutate(freq = 1)  #add a column named frequency and set its value to 1 for all rows initially
+
+# replace variable freq by quantity in each group of dist_from_cut_round10
+  data_temp <- data_temp%>% 
+  group_by(dist_from_cut_med10) %>% 
+  mutate(freq = mean(nextGPA, na.rm=TRUE)) #group data by distance from cutoff and change frequency as the number of elements in a group
+fig <- data_temp %>% 
+  ggplot(aes(x = dist_from_cut_med10, y = freq)) + 
+  geom_point(aes(color=data_temp$dist_from_cut<0), show.legend = FALSE) +
+  geom_smooth(method = "glm", formula = y ~ poly(x, 2), se = FALSE, data = data_temp[data_temp$dist_from_cut_med10 > 0, ])+
+  geom_smooth(method = "glm", formula = y ~ poly(x, 2), se = FALSE, data = data_temp[data_temp$dist_from_cut_med10 < 0, ])+
+  geom_vline(xintercept = 0) + 
+  labs(y = 'Subsequent GPA minus cutoff', x = "First Year GPA minus probation cutoff") +
+  ggtitle(name)+
+  theme(axis.text=element_text(size=6),  axis.title=element_text(size=6), plot.title = element_text(size=8))+
+  coord_fixed()
+fig
+}
+
+grid.arrange(rdd_plot(hsg_ls_med, 'hs grade < median'), rdd_plot(hsg_gr_med, 'hs grade > median'), rdd_plot(male_data, 'male'), rdd_plot(female_data, 'female'), rdd_plot(Eng_data, 'English'), rdd_plot(noeng_data, 'other'), nrow = 3)
+```
+Visual representation of the data in the following plots confirms the assessments made and align with the plots in teh original report.  
+\newpage
+Lindo et al Figure 8 ^1^
+```{r}
+knitr::include_graphics(rep("C:/Users/Louise/OneDrive/Documents/ECOM5002/R data/Figure 8.png"))
+```
 
 ## Critical Assessment
 In replicating this report a number of issues and inconsistencies were encountered:
